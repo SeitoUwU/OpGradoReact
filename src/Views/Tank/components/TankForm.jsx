@@ -67,7 +67,6 @@ const TankForm = ({ type, onClose, getTanks }) => {
     }
 
     const addTank = async () => {
-        console.log(formData);
         try {
             const response = await axios.post('http://localhost:3000/api/tank/createTank', {
                 tankId: formData.tankId,

@@ -38,7 +38,6 @@ function Index() {
     const getTanks = async () => {
         try {
             const response = await axios.get('http://localhost:3000/api/tank/getTanks');
-            console.log(response.data.data);
             setTanks(response.data.data);
         } catch (error) {
             setLoading(false);
