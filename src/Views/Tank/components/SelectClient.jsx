@@ -2,7 +2,7 @@ import React from "react";
 import axios from 'axios';
 import { useState } from "react";
 
-const SelectClient = ({ isOpen, onClose, onSelectClient, clients, setClients, getClients }) => {
+const SelectClient = ({ isOpen, onClose, onSelectClient, clients, setClients, getClients, }) => {
     const [searchType, setSearchType] = useState('empresa');
     const [searchValue, setSearchValue] = useState('');
 
@@ -19,26 +19,13 @@ const SelectClient = ({ isOpen, onClose, onSelectClient, clients, setClients, ge
         }
     }
 
-    const filterClientsByNit = async (nit) => {
-        try {
-            const response = await axios.post('http://localhost:3000/api/client/filterClientByNit', {
-                nit: nit
-            }, {
-                withCredentials: true
-            });
-            setClients(response.data.data);
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
     const onSearch = (value) => {
         if (value === '') {
             getClients();
         }else if (searchType === 'client') {
-            filterClientsByNit(value);
+            // filterClientsByNit(value);
         } else if (searchType === 'empresa') {
-            filterClientsByCompany(value);
+            // filterClientsByCompany(value);
         }
     }
 
@@ -68,14 +55,14 @@ const SelectClient = ({ isOpen, onClose, onSelectClient, clients, setClients, ge
                                         />
                                     </button>
                                     <span className={`text-sm ${searchType === 'client' ? 'text-blue-600' : 'text-gray-500'}`}>
-                                        NIT Cliente
+                                        Cedula
                                     </span>
                                 </div>
                             </div>
                             <div className="relative">
                                 <input
                                     type="text"
-                                    placeholder={searchType === 'empresa' ? "Buscar por empresa..." : "Buscar por NIT de cliente..."}
+                                    placeholder={searchType === 'empresa' ? "Buscar por empresa..." : "Buscar por cedula de cliente..."}
                                     value={searchValue}
                                     onChange={(e) => {
                                         setSearchValue(e.target.value); 
@@ -100,6 +87,7 @@ const SelectClient = ({ isOpen, onClose, onSelectClient, clients, setClients, ge
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CEDULA</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">NOMBRE</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">APELLIDO</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">NIT</th>
@@ -109,7 +97,8 @@ const SelectClient = ({ isOpen, onClose, onSelectClient, clients, setClients, ge
                             </thead>
                             <tbody className="divide-y divide-gray-200">
                                 {clients.map(client => (
-                                    <tr key={client.NIT} className="hover:bg-gray-50">
+                                    <tr key={client.ID} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4">{client.CEDULA}</td>
                                         <td className="px-6 py-4">{client.NOMBRE}</td>
                                         <td className="px-6 py-4">{client.APELLIDO}</td>
                                         <td className="px-6 py-4">{client.NIT}</td>

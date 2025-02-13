@@ -3,7 +3,7 @@ import { AddIcon, DeleteIcon, EditIcon, SensorIcon } from "../../../assets/icons
 import TankForm from "./TankForm";
 import SearchTank from "./SearchTankBy";
 
-const TankOptions = ({ getTanks, filterTanksById, filterTankByNitClient }) => {
+const TankOptions = ({ getTanks, filterTanksById, filterTankByIdClient }) => {
     const [showForm, setShowForm] = useState(false);
     const [formType, setFormType] = useState('');
 
@@ -59,7 +59,7 @@ const TankOptions = ({ getTanks, filterTanksById, filterTankByNitClient }) => {
             <SearchTank
                 getTanks={getTanks}
                 filterTanksById={filterTanksById}
-                filterTankByNitClient={filterTankByNitClient}
+                filterTankByIdClient={filterTankByIdClient}
             />
         </div>
     )

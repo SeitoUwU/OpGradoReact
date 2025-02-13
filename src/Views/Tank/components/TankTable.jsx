@@ -43,8 +43,9 @@ const TankTable = ({tanks, loading }) => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{tank.ASIGNACION_EMPL}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{tank.CEDULA}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{tank.CLIENTE}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{tank.NIT_CLIENTE}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{tank.NIT}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{tank.SENSOR}</td>
                                 </tr>
                             ))

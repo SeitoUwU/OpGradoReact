@@ -1,9 +1,8 @@
 import React from "react";
 import axios from 'axios';
 import { useState } from "react";
-import { useEfect } from "react";
 
-const SearchTankBy = ({getTanks, filterTanksById, filterTankByNitClient}) => {
+const SearchTankBy = ({getTanks, filterTanksById, filterTankByIdClient}) => {
 
     const [searchType, setSearchType] = useState('tank'); // 'tank' o 'client'
     const [searchValue, setSearchValue] = useState('');
@@ -20,7 +19,7 @@ const SearchTankBy = ({getTanks, filterTanksById, filterTankByNitClient}) => {
         if (searchType === 'tank') {
             filterTanksById(value);
         }else {
-            filterTankByNitClient(value);
+            filterTankByIdClient(value);
         }
     }
 
@@ -42,7 +41,7 @@ const SearchTankBy = ({getTanks, filterTanksById, filterTankByNitClient}) => {
                         />
                     </button>
                     <span className={`text-sm ${searchType === 'client' ? 'text-blue-600' : 'text-gray-500'}`}>
-                        NIT Cliente
+                        Cedula
                     </span>
                 </div>
             </div>

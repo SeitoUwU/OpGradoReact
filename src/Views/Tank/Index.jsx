@@ -24,10 +24,10 @@ function Index() {
         }
     }
 
-    const filterTankByNitClient = async (value) => {
+    const filterTankByIdClient = async (value) => {
         try {
-            const response = await axios.post('http://localhost:3000/api/tank/filterTankByNitClient', {
-                nitClient: value
+            const response = await axios.post('http://localhost:3000/api/tank/filterTankByIdClient', {
+                idClient: value
             });
             setTanks(response.data.data);
         } catch (error) {
@@ -50,7 +50,7 @@ function Index() {
                 <TankOptions
                     getTanks={getTanks}
                     filterTanksById={filterTanksById}
-                    filterTankByNitClient={filterTankByNitClient}
+                    filterTankByIdClient={filterTankByIdClient}
                 />
                 <TankTable
                     tanks={tanks}
