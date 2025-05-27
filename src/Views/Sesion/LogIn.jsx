@@ -1,8 +1,8 @@
 import React from 'react'
-import axios from 'axios'
 import { useState } from 'react'
 import { toast, Toaster } from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../AuthContext/AuthContext'
 
 function LogIn() {
     const [user, setUser] = useState({
@@ -10,24 +10,26 @@ function LogIn() {
         userPassword: ''
     })
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
     const navigate = useNavigate();
+    const { login } = useAuth(); 
 
-    const login = async (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true)
-        setError(null)
+        
         try {
-
-            const response = await axios.post('http://localhost:3000/api/auth/login', {
+            const result = await login({
                 nameUser: user.nameUser,
                 userPassword: user.userPassword
-            }, {
-                withCredentials: true
-
             });
-            if (response.data.success) {
+
+            if (result.success) {
                 navigate('/sensor')
+            } else {
+                toast.error(result.error || 'Error al intentar iniciar sesión', {
+                    duration: 1500,
+                    position: 'top-right',
+                });
             }
         } catch (error) {
             toast.error('Error al intentar iniciar sesión', {
@@ -52,7 +54,7 @@ function LogIn() {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="max-w-sm mx-auto bg-white rounded-lg shadow-md overflow-hidden p-6">
                     <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">Welcome To GasCaqueta</h1>
-                    <form onSubmit={login}>
+                    <form onSubmit={handleLogin}>
                         <div className="space-y-4">
                             <input name='nameUser'
                                 value={user.nameUser}
@@ -82,4 +84,5 @@ function LogIn() {
         </>
     )
 }
+
 export default LogIn
