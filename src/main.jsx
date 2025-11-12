@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from '../src/AuthContext/AuthContext.jsx'
 import ProtectedRoute from './protectedRoute.jsx'
+import MainLayout from './layouts/MainLayout.jsx'
 import LogIn from './Views/Sesion/LogIn.jsx'
 import Index from './Views/Sensor/Index.jsx'
 import TankIndex from './Views/Tank/Index.jsx'
@@ -19,14 +20,18 @@ createRoot(document.getElementById('root')).render(
             path='/sensor'
             element={
               <ProtectedRoute>
-                <Index />
+                <MainLayout>
+                  <Index />
+                </MainLayout>
               </ProtectedRoute>}
           />
           <Route
             path='/tank'
             element={
               <ProtectedRoute>
-                <TankIndex />
+                <MainLayout>
+                  <TankIndex />
+                </MainLayout>
               </ProtectedRoute>
             }
           />
@@ -34,7 +39,9 @@ createRoot(document.getElementById('root')).render(
             path='/clients'
             element={
               <ProtectedRoute>
-                <ClientsIndex />
+                <MainLayout>
+                  <ClientsIndex />
+                </MainLayout>
               </ProtectedRoute>
             }
           />
