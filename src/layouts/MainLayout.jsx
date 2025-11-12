@@ -8,7 +8,12 @@ import {
   Menu,
   X,
   LogOut,
-  Droplet
+  Droplet,
+  LayoutDashboard,
+  Bell,
+  Package,
+  Wrench,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../AuthContext/AuthContext';
 
@@ -20,9 +25,14 @@ const MainLayout = ({ children }) => {
   const { logout, user } = useAuth();
 
   const menuItems = [
-    { path: '/sensor', icon: Gauge, label: 'Sensores' },
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/alerts', icon: Bell, label: 'Alertas' },
     { path: '/tank', icon: Container, label: 'Tanques' },
+    { path: '/sensor', icon: Gauge, label: 'Sensores' },
     { path: '/clients', icon: Users, label: 'Clientes' },
+    { path: '/supplies', icon: Package, label: 'Suministros' },
+    { path: '/maintenance', icon: Wrench, label: 'Mantenimientos' },
+    { path: '/reports', icon: FileText, label: 'Informes' },
   ];
 
   const handleLogout = () => {
@@ -38,7 +48,7 @@ const MainLayout = ({ children }) => {
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 bg-white rounded-lg shadow-lg text-gray-700 hover:text-blue-600"
+          className="p-2 bg-white rounded-lg shadow-lg text-gray-700 hover:text-gc-blue hover:bg-gc-blue-50"
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -54,16 +64,18 @@ const MainLayout = ({ children }) => {
           {/* Logo */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-2.5 rounded-xl shadow-lg">
-                <Droplet className="text-white" size={28} />
-              </div>
+              <img
+                src="/img/gasCaqueta.png"
+                alt="GasCaquetá Logo"
+                className="w-12 h-12 object-contain"
+              />
               {isSidebarOpen && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <h1 className="text-xl font-bold text-gray-900">GasCaquetá</h1>
+                  <h1 className="text-xl font-bold text-gc-blue">GasCaquetá</h1>
                   <p className="text-xs text-gray-500">Sistema de Monitoreo</p>
                 </motion.div>
               )}
@@ -80,8 +92,8 @@ const MainLayout = ({ children }) => {
                   flex items-center gap-3 px-4 py-3 rounded-xl
                   transition-all duration-200
                   ${isActive(item.path)
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-gc-blue to-gc-blue-600 text-white shadow-lg shadow-gc-blue/20'
+                    : 'text-gray-700 hover:bg-gc-blue-50'
                   }
                 `}
               >
@@ -159,11 +171,13 @@ const MainLayout = ({ children }) => {
                 {/* Logo */}
                 <div className="p-6 border-b border-gray-200">
                   <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-2.5 rounded-xl">
-                      <Droplet className="text-white" size={28} />
-                    </div>
+                    <img
+                      src="/img/gasCaqueta.png"
+                      alt="GasCaquetá Logo"
+                      className="w-12 h-12 object-contain"
+                    />
                     <div>
-                      <h1 className="text-xl font-bold text-gray-900">GasCaquetá</h1>
+                      <h1 className="text-xl font-bold text-gc-blue">GasCaquetá</h1>
                       <p className="text-xs text-gray-500">Sistema de Monitoreo</p>
                     </div>
                   </div>
@@ -180,8 +194,8 @@ const MainLayout = ({ children }) => {
                         flex items-center gap-3 px-4 py-3 rounded-xl
                         transition-all duration-200
                         ${isActive(item.path)
-                          ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'bg-gradient-to-r from-gc-blue to-gc-blue-600 text-white shadow-lg shadow-gc-blue/20'
+                          : 'text-gray-700 hover:bg-gc-blue-50'
                         }
                       `}
                     >

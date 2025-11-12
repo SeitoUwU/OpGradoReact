@@ -25,7 +25,9 @@ function LogIn() {
             });
 
             if (result.success) {
-                toast.success('Inicio de sesión exitoso');
+                toast.success('Inicio de sesión exitoso', {
+                    duration: 2000,
+                });
                 setTimeout(() => navigate('/sensor'), 500);
             } else {
                 toast.error(result.error || 'Error al intentar iniciar sesión');
@@ -44,12 +46,12 @@ function LogIn() {
     return (
         <>
             <Toaster position="top-right" />
-            <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-gc-blue via-gc-blue-600 to-gc-blue-600 flex items-center justify-center p-4">
                 {/* Background Decorations */}
                 <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-                    <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+                    <div className="absolute -top-40 -right-40 w-80 h-80 bg-gc-green rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+                    <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gc-orange rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gc-lime rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
                 </div>
 
                 {/* Login Card */}
@@ -61,19 +63,23 @@ function LogIn() {
                 >
                     <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
                         {/* Header with gradient */}
-                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-10 text-center">
+                        <div className="bg-gradient-to-r from-gc-blue to-gc-blue-600 px-8 py-10 text-center">
                             <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
                                 className="inline-block bg-white/20 backdrop-blur-sm p-4 rounded-2xl mb-4"
                             >
-                                <Droplet className="text-white" size={48} />
+                                <img
+                                    src="/img/gasCaqueta.png"
+                                    alt="GasCaquetá Logo"
+                                    className="w-16 h-16 object-contain"
+                                />
                             </motion.div>
                             <h1 className="text-3xl font-bold text-white mb-2">
                                 GasCaquetá
                             </h1>
-                            <p className="text-blue-100 text-sm">
+                            <p className="text-gc-lime-100 text-sm">
                                 Sistema de Monitoreo de Gas
                             </p>
                         </div>
@@ -105,7 +111,7 @@ function LogIn() {
                                             type="text"
                                             required
                                             className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl
-                                                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                                     focus:outline-none focus:ring-2 focus:ring-gc-blue focus:border-transparent
                                                      transition-all duration-200 bg-gray-50 hover:bg-white"
                                         />
                                     </div>
@@ -128,7 +134,7 @@ function LogIn() {
                                             type="password"
                                             required
                                             className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl
-                                                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                                     focus:outline-none focus:ring-2 focus:ring-gc-blue focus:border-transparent
                                                      transition-all duration-200 bg-gray-50 hover:bg-white"
                                         />
                                     </div>
@@ -142,10 +148,10 @@ function LogIn() {
                                     disabled={loading}
                                     className={`
                                         w-full py-3.5 px-6 rounded-xl font-semibold text-white
-                                        bg-gradient-to-r from-blue-600 to-blue-700
-                                        hover:from-blue-700 hover:to-blue-800
-                                        shadow-lg shadow-blue-500/30
-                                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                                        bg-gradient-to-r from-gc-blue to-gc-blue-600
+                                        hover:from-gc-blue-600 hover:to-gc-blue-600
+                                        shadow-lg shadow-gc-blue/30
+                                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gc-blue
                                         transition-all duration-200
                                         flex items-center justify-center gap-2
                                         ${loading ? 'opacity-70 cursor-not-allowed' : ''}
@@ -182,7 +188,7 @@ function LogIn() {
 
                     {/* Bottom decoration */}
                     <div className="text-center mt-6">
-                        <p className="text-blue-100 text-sm">
+                        <p className="text-white/80 text-sm">
                             Desarrollado para GasCaquetá
                         </p>
                     </div>

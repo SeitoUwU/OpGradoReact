@@ -151,7 +151,7 @@ function Index() {
                 >
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                            <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-3 rounded-xl shadow-lg">
+                            <div className="bg-gradient-to-br from-gc-blue to-gc-blue-600 p-3 rounded-xl shadow-lg">
                                 <Gauge className="text-white" size={32} />
                             </div>
                             Gestión de Sensores
@@ -224,7 +224,7 @@ function Index() {
                                         value={selectedFilter}
                                         onChange={(e) => handleFilterChange(e.target.value)}
                                         className="px-4 py-2 pr-10 border-2 border-gray-300 rounded-lg
-                                                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                                 focus:outline-none focus:ring-2 focus:ring-gc-blue focus:border-transparent
                                                  bg-white text-gray-700 font-medium cursor-pointer"
                                     >
                                         <option value="">Todos los estados</option>
@@ -271,7 +271,7 @@ function Index() {
                                     <CardHeader>
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-2.5 rounded-lg">
+                                                <div className="bg-gradient-to-br from-gc-blue to-gc-blue-600 p-2.5 rounded-lg">
                                                     <Gauge className="text-white" size={24} />
                                                 </div>
                                                 <div>
@@ -328,7 +328,7 @@ function Index() {
                                 onChange={(e) => setSensorId(e.target.value)}
                                 placeholder={modalType === 'add' ? 'Ej: SENSOR-001' : 'Ingrese el ID'}
                                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg
-                                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                         focus:outline-none focus:ring-2 focus:ring-gc-blue focus:border-transparent"
                                 required
                             />
                         </div>

@@ -144,19 +144,20 @@ function Index() {
     return (
         <>
             <Toaster />
-            <div className="space-y-6">
+            <div className="p-6 md:p-8 lg:p-10 space-y-8">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
+                    className="mb-6"
                 >
-                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                        <div className="bg-gradient-to-br from-green-600 to-green-700 p-3 rounded-xl shadow-lg">
+                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3 mb-2">
+                        <div className="bg-gradient-to-br from-gc-green to-gc-green-600 p-3 rounded-xl shadow-lg">
                             <Container className="text-white" size={32} />
                         </div>
                         Gestión de Tanques
                     </h1>
-                    <p className="text-gray-600 mt-2">Administra y monitorea todos los tanques de gas</p>
+                    <p className="text-gray-600">Administra y monitorea todos los tanques de gas</p>
                 </motion.div>
 
                 {/* Stats */}

@@ -75,19 +75,20 @@ const Index = () => {
     return (
         <>
             <Toaster />
-            <div className="space-y-6">
+            <div className="p-6 md:p-8 lg:p-10 space-y-8">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
+                    className="mb-6"
                 >
-                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3 mb-2">
                         <div className="bg-gradient-to-br from-purple-600 to-purple-700 p-3 rounded-xl shadow-lg">
                             <Users className="text-white" size={32} />
                         </div>
                         Gestión de Clientes
                     </h1>
-                    <p className="text-gray-600 mt-2">Administra y visualiza la información de tus clientes</p>
+                    <p className="text-gray-600">Administra y visualiza la información de tus clientes</p>
                 </motion.div>
 
                 {/* Stats */}
@@ -184,7 +185,7 @@ const Index = () => {
                                 <Card gradient>
                                     <CardHeader>
                                         <div className="flex items-center gap-3">
-                                            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-full">
+                                            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-xl">
                                                 <Building2 className="text-white" size={24} />
                                             </div>
                                             <div className="flex-1">
@@ -202,26 +203,26 @@ const Index = () => {
                                     <CardBody>
                                         <div className="space-y-3">
                                             <div className="flex items-start gap-3 py-2 border-b border-gray-100">
-                                                <Hash className="text-gray-400 flex-shrink-0 mt-0.5" size={18} />
+                                                <Hash className="text-gray-400 flex-shrink-0 mt-1" size={18} />
                                                 <div>
-                                                    <p className="text-xs text-gray-500">Cédula</p>
+                                                    <p className="text-xs text-gray-500 mb-1">Cédula</p>
                                                     <p className="text-sm font-semibold text-gray-900">{client.CEDULA}</p>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-start gap-3 py-2 border-b border-gray-100">
-                                                <MapPin className="text-gray-400 flex-shrink-0 mt-0.5" size={18} />
+                                                <MapPin className="text-gray-400 flex-shrink-0 mt-1" size={18} />
                                                 <div>
-                                                    <p className="text-xs text-gray-500">Dirección</p>
+                                                    <p className="text-xs text-gray-500 mb-1">Dirección</p>
                                                     <p className="text-sm font-medium text-gray-700">{client.DIRECCION}</p>
                                                     <p className="text-xs text-gray-500 mt-1">Barrio: {client.BARRIO}</p>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-start gap-3 py-2">
-                                                <Mail className="text-gray-400 flex-shrink-0 mt-0.5" size={18} />
+                                                <Mail className="text-gray-400 flex-shrink-0 mt-1" size={18} />
                                                 <div>
-                                                    <p className="text-xs text-gray-500">Correo Electrónico</p>
+                                                    <p className="text-xs text-gray-500 mb-1">Correo Electrónico</p>
                                                     <p className="text-sm font-medium text-gray-700 break-all">
                                                         {client.CORREO}
                                                     </p>

@@ -12,12 +12,12 @@ const StatCard = ({
   className = ''
 }) => {
   const colors = {
-    blue: 'from-blue-500 to-blue-600',
-    green: 'from-green-500 to-green-600',
+    blue: 'from-gc-blue to-gc-blue-600',
+    green: 'from-gc-green to-gc-green-600',
     red: 'from-red-500 to-red-600',
     yellow: 'from-yellow-500 to-yellow-600',
-    purple: 'from-purple-500 to-purple-600',
-    indigo: 'from-indigo-500 to-indigo-600',
+    orange: 'from-gc-orange to-gc-orange-600',
+    lime: 'from-gc-lime to-gc-lime-600',
   };
 
   return (
