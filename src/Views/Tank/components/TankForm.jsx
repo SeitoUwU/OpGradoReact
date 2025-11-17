@@ -1,9 +1,8 @@
-import React, { useEffect } from "react";
-import axios from "axios";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { UserIcon } from "../../../assets/icons/Icons";
 import { toast, Toaster } from "react-hot-toast";
 import SelectClient from "./SelectClient";
+import { tanksAPI, sensorsAPI, usersAPI } from '../../../services/apiV2.js';
 
 const TankForm = ({ type, onClose, getTanks }) => {
     const [sensors, setSensors] = useState([]);
@@ -50,115 +49,98 @@ const TankForm = ({ type, onClose, getTanks }) => {
 
     const getClients = async () => {
         try {
-            const response = await axios.get('http://localhost:3000/api/client/getClients');
-            setClients(response.data.data);
+            const response = await usersAPI.getClients();
+            setClients(response || []);
         } catch (error) {
-            console.log(error);
+            toast.error('Error al cargar clientes');
+            console.error(error);
         }
     }
 
     const getSensorsWhitoutTank = async () => {
         try {
-            const response = await axios.get('http://localhost:3000/api/sensor/getSensorWhithoutTank');
-            setSensors(response.data.data);
+            const response = await sensorsAPI.getSensorsWithoutTank();
+            setSensors(response.data || []);
         } catch (error) {
-            console.log(error);
+            toast.error('Error al cargar sensores');
+            console.error(error);
         }
     }
 
     const addTank = async () => {
         try {
-            const response = await axios.post('http://localhost:3000/api/tank/createTank', {
+            await tanksAPI.createTank({
                 tankId: formData.tankId,
                 tankCapacity: formData.storage,
                 clientId: formData.clientId,
                 sensorId: formData.sensorId
-            }, {
-                withCredentials: true
             });
-            if (response.status === 200) {
-                toast.success('Tanque insertado correctamente', {
-                    duration: 1500,
-                    position: 'top-right'
-                });
-                getTanks();
-                onClose();
-            }
+            toast.success('Tanque insertado correctamente', {
+                duration: 1500,
+                position: 'top-right'
+            });
+            getTanks();
+            onClose();
         } catch (error) {
             toast.error('Error al insertar tanque', {
                 duration: 2000,
                 position: 'top-right'
             });
+            console.error(error);
         }
     }
 
     const delteTank = async (tankId) => {
         try {
-            const response = await axios.delete('http://localhost:3000/api/tank/deleteTank', {
-                data: { tankId },
-                withCredentials: true
+            await tanksAPI.deleteTank(tankId);
+            toast.success('Tanque eliminado correctamente', {
+                duration: 1500,
+                position: 'top-right'
             });
-            if (response.status === 200) {
-                toast.success('Tanque eliminado correctamente', {
-                    duration: 1500,
-                    position: 'top-right'
-                });
-                getTanks();
-                onClose();
-            }
+            getTanks();
+            onClose();
         } catch (error) {
             toast.error('Error al eliminar el tanque', {
                 duration: 1500,
                 position: 'top-right'
             });
+            console.error(error);
         }
     }
 
     const modifyTankClient = async (tankId, clientNit) => {
         try {
-            const response = await axios.put('http://localhost:3000/api/tank/modifyTankClient', {
-                tankId,
-                clientNit
-            }, {
-                withCredentials: true
+            await tanksAPI.updateTank(tankId, { clientNit });
+            toast.success('Cliente modificado correctamente', {
+                duration: 1500,
+                position: 'top-right'
             });
-            if (response.status === 200) {
-                toast.success('Cliente modificado correctamente', {
-                    duration: 1500,
-                    position: 'top-right'
-                });
-                getTanks();
-                onClose();
-            }
+            getTanks();
+            onClose();
         } catch (error) {
             toast.error('Error al modificar el cliente', {
                 duration: 2000,
                 position: 'top-right'
             });
+            console.error(error);
         }
     }
 
     const modifyTankSensor = async (tankId, sensorId) => {
         try {
-            const response = await axios.put('http://localhost:3000/api/tank/modifyTankSensor', {
-                tankId: tankId,
-                sensorId: sensorId
-            }, {
-                withCredentials: true
+            await tanksAPI.updateTank(tankId, { sensorId });
+            toast.success('Sensor modificado correctamente', {
+                duration: 1500,
+                position: 'top-right'
             });
-            if (response.status === 200) {
-                toast.success('Sensor modificado correctamente', {
-                    duration: 1500,
-                    position: 'top-right'
-                });
-                getTanks();
-                onClose();
-            }
+            getTanks();
+            onClose();
         } catch (error) {
             toast.error('Error al modificar el sensor', {
                 duration: 2000,
                 position: 'top-right'
             });
+            console.error(error);
         }
     }
 
@@ -213,8 +195,8 @@ const TankForm = ({ type, onClose, getTanks }) => {
                                     isOpen={isClientModalOpen}
                                     onClose={() => setIsClientModalOpen(false)}
                                     onSelectClient={(client) => {
-                                        setFormData({ ...formData, clientId: client.ID });
-                                        setClient({...client, clientNombre: client.NOMBRE, clientApellido: client.APELLIDO});
+                                        setFormData({ ...formData, clientId: client.id });
+                                        setClient({...client, clientNombre: client.name, clientApellido: client.email});
                                         setIsClientModalOpen(false);
                                         setShowClientInfo(true);
                                     }}

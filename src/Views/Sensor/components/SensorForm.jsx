@@ -1,6 +1,6 @@
-import axios from 'axios';
 import React, { useState } from "react";
-import { toast, Toaster } from 'react-hot-toast'
+import { toast, Toaster } from 'react-hot-toast';
+import { sensorsAPI } from '../../../services/apiV2.js';
 
 
 const SensorForm = ({ type, onClose, refreshSensors }) => {
@@ -19,18 +19,14 @@ const SensorForm = ({ type, onClose, refreshSensors }) => {
 
     const createSensor = async () => {
         try {
-            const response = await axios.post('http://localhost:3000/api/sensor/createSensor', {
-                sensorId
-            }, {
-                withCredentials: true
-            });
+            await sensorsAPI.createSensor({ sensorId });
             toast.success('Sensor insertado correctamente', {
                 duration: 1500,
                 position: 'top-right',
             });
             await refreshSensors();
         } catch (error) {
-            console.log(error);
+            console.error(error);
             toast.error('Error al insertar sensor', {
                 duration: 2000,
                 position: 'top-right',
@@ -40,17 +36,15 @@ const SensorForm = ({ type, onClose, refreshSensors }) => {
 
     const deleteSensor = async (sensorId) => {
         try {
-            const response = await axios.delete('http://localhost:3000/api/sensor/deleteSensor', {
-                data: { sensorId },
-                withCredentials: true
-            });
+            await sensorsAPI.deleteSensor(sensorId);
             toast.success('Sensor eliminado correctamente', {
                 duration: 1500,
                 position: 'top-right',
             });
             await refreshSensors();
         } catch (error) {
-            console.log(error);
+            toast.error('Error al eliminar sensor');
+            console.error(error);
         }
     }
 

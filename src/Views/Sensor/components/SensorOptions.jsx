@@ -1,7 +1,8 @@
-import axios from 'axios';
 import React, { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import SensorForm from './sensorForm';
 import { AddIcon, DeleteIcon, FilterIcon } from '../../../assets/icons/Icons';
+import { sensorsAPI } from '../../../services/apiV2.js';
 
 const SensorOptions = ({ sensorStates, setSensors, refreshSensors }) => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -22,17 +23,16 @@ const SensorOptions = ({ sensorStates, setSensors, refreshSensors }) => {
 
     const getSensorsFiltered = async (value) => {
         try {
+            const response = await sensorsAPI.getSensors();
             if (value) {
-                const response = await axios.post('http://localhost:3000/api/sensor/filterSensorAs', {
-                    sensorState: value
-                })
-                setSensors(response.data.data);
+                const filtered = response.data.filter(sensor => sensor.status === value);
+                setSensors(filtered);
             } else {
-                const response = await axios.get('http://localhost:3000/api/sensor/getSensor');
-                setSensors(response.data.data);
+                setSensors(response.data || []);
             }
         } catch (error) {
-            console.log(error);
+            toast.error('Error al filtrar sensores');
+            console.error(error);
         }
     }
 

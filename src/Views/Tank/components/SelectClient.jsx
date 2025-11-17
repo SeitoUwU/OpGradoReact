@@ -1,6 +1,6 @@
-import React from "react";
-import axios from 'axios';
-import { useState } from "react";
+import React, { useState } from "react";
+import { toast } from 'react-hot-toast';
+import { usersAPI } from '../../../services/apiV2.js';
 
 const SelectClient = ({ isOpen, onClose, onSelectClient, clients, setClients, getClients, }) => {
     const [searchType, setSearchType] = useState('empresa');
@@ -8,24 +8,37 @@ const SelectClient = ({ isOpen, onClose, onSelectClient, clients, setClients, ge
 
     const filterClientsByCompany = async (company) => {
         try {
-            const response = await axios.post('http://localhost:3000/api/client/filterClientByCompany', {
-                company: company
-            },{ 
-                withCredentials: true
-            });
-            setClients(response.data.data);
+            const response = await usersAPI.getClients();
+            const filtered = response.filter(client =>
+                client.company?.toLowerCase().includes(company.toLowerCase())
+            );
+            setClients(filtered);
         } catch (error) {
-            console.log(error);
+            toast.error('Error al filtrar clientes');
+            console.error(error);
         }
     }
 
     const onSearch = (value) => {
         if (value === '') {
             getClients();
-        }else if (searchType === 'client') {
-            // filterClientsByNit(value);
+        } else if (searchType === 'client') {
+            filterClientsByCedula(value);
         } else if (searchType === 'empresa') {
-            // filterClientsByCompany(value);
+            filterClientsByCompany(value);
+        }
+    }
+
+    const filterClientsByCedula = async (cedula) => {
+        try {
+            const response = await usersAPI.getClients();
+            const filtered = response.filter(client =>
+                client.identificationNumber?.toLowerCase().includes(cedula.toLowerCase())
+            );
+            setClients(filtered);
+        } catch (error) {
+            toast.error('Error al filtrar clientes');
+            console.error(error);
         }
     }
 
@@ -87,22 +100,20 @@ const SelectClient = ({ isOpen, onClose, onSelectClient, clients, setClients, ge
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CEDULA</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">NOMBRE</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">APELLIDO</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">NIT</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">EMPRESA</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Identificación</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Empresa</th>
                                     <th className="px-6 py-3"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
                                 {clients.map(client => (
-                                    <tr key={client.ID} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4">{client.CEDULA}</td>
-                                        <td className="px-6 py-4">{client.NOMBRE}</td>
-                                        <td className="px-6 py-4">{client.APELLIDO}</td>
-                                        <td className="px-6 py-4">{client.NIT}</td>
-                                        <td className="px-6 py-4">{client.EMPRESA}</td>
+                                    <tr key={client.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4">{client.identificationNumber}</td>
+                                        <td className="px-6 py-4">{client.name}</td>
+                                        <td className="px-6 py-4">{client.email}</td>
+                                        <td className="px-6 py-4">{client.company || 'N/A'}</td>
                                         <td className="px-6 py-4">
                                             <button
                                                 onClick={() => onSelectClient(client)}
