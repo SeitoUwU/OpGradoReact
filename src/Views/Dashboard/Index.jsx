@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../AuthContext/AuthContextV2';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -28,11 +28,7 @@ const Dashboard = () => {
 
     const isAdmin = user?.role?.toLowerCase() === 'admin';
 
-    useEffect(() => {
-        loadDashboardData();
-    }, []);
-
-    const loadDashboardData = async () => {
+    const loadDashboardData = useCallback(async () => {
         try {
             setLoading(true);
             const tanksRes = await tanksAPI.getTanks();
@@ -62,7 +58,11 @@ const Dashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [isAdmin]);
+
+    useEffect(() => {
+        loadDashboardData();
+    }, [loadDashboardData]);
 
     const adminCards = [
         {

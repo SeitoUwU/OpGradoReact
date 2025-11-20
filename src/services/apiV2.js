@@ -255,6 +255,148 @@ export const dashboardAPI = {
   getNotifications: async () => fetchAPI('/dashboard/notifications'),
 };
 
+export const reportsAPI = {
+  // Obtener datos de reportes
+  getGeneralReport: async (params) => fetchAPI('/reports/general?' + new URLSearchParams(params)),
+
+  getTankReport: async (tankId, params) => fetchAPI(`/reports/tank/${tankId}?` + new URLSearchParams(params)),
+
+  getClientReport: async (clientId, params) => fetchAPI(`/reports/client/${clientId}?` + new URLSearchParams(params)),
+
+  // Exportar reportes en diferentes formatos
+  exportReport: async (type, format, params) => {
+    const token = localStorage.getItem('token');
+    const queryParams = new URLSearchParams({ ...params, type, format });
+
+    try {
+      const response = await fetch(`${API_URL}/reports/export?${queryParams}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        // Intentar leer el error del backend
+        let errorMessage = 'Error al exportar el reporte';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+          // Si no se puede parsear como JSON, usar el mensaje por defecto
+          errorMessage = `Error ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const blob = await response.blob();
+
+      // Verificar que el blob no esté vacío
+      if (blob.size === 0) {
+        throw new Error('El archivo generado está vacío');
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+
+      // Obtener el nombre del archivo desde el header Content-Disposition o generar uno
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `reporte-${type}-${new Date().toISOString().split('T')[0]}.${format}`;
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      return { success: true, message: 'Reporte exportado exitosamente', filename };
+    } catch (error) {
+      console.error('Error exportando reporte:', error);
+      throw error;
+    }
+  },
+
+  // Descargar PDF de reporte específico
+  downloadPDF: async (reportType, params) => {
+    const token = localStorage.getItem('token');
+    const queryParams = new URLSearchParams(params);
+
+    try {
+      const response = await fetch(`${API_URL}/reports/download/${reportType}?${queryParams}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al descargar el PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${reportType}-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error descargando PDF:', error);
+      throw error;
+    }
+  },
+
+  // Vista previa de PDF
+  previewPDF: async (reportType, params) => {
+    const token = localStorage.getItem('token');
+    const queryParams = new URLSearchParams(params);
+
+    try {
+      const response = await fetch(`${API_URL}/reports/preview/${reportType}?${queryParams}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al obtener vista previa');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error mostrando vista previa:', error);
+      throw error;
+    }
+  },
+
+  // Enviar reporte por email
+  sendReportByEmail: async (reportType, params, emailTo) => fetchAPI('/reports/send-email', {
+    method: 'POST',
+    body: JSON.stringify({
+      reportType,
+      params,
+      emailTo,
+    }),
+  }),
+};
+
 export default {
   auth: authAPI,
   users: usersAPI,
@@ -262,5 +404,6 @@ export default {
   sensors: sensorsAPI,
   alerts: alertsAPI,
   recharges: rechargesAPI,
-  dashboard: dashboardAPI
+  dashboard: dashboardAPI,
+  reports: reportsAPI,
 };

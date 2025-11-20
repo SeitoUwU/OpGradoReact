@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 
 const Input = ({
   label,
@@ -30,6 +30,15 @@ const Input = ({
       )}
     </div>
   );
+};
+
+Input.propTypes = {
+  label: PropTypes.string,
+  error: PropTypes.string,
+  required: PropTypes.bool,
+  className: PropTypes.string,
+  type: PropTypes.string,
+  disabled: PropTypes.bool
 };
 
 export default Input;

@@ -1,5 +1,5 @@
-import React from 'react';
 import { Check } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 const Checkbox = ({
   label,
@@ -53,6 +53,16 @@ const Checkbox = ({
       )}
     </div>
   );
+};
+
+Checkbox.propTypes = {
+  label: PropTypes.string,
+  checked: PropTypes.bool,
+  onChange: PropTypes.func,
+  disabled: PropTypes.bool,
+  error: PropTypes.string,
+  helperText: PropTypes.string,
+  className: PropTypes.string
 };
 
 export default Checkbox;

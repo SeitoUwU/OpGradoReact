@@ -9,10 +9,12 @@ import {
     Container,
     BarChart3,
     PieChart,
-    Filter
+    Filter,
+    FileSpreadsheet,
+    Eye
 } from 'lucide-react';
 import Card, { CardHeader, CardBody } from '../../components/Card';
-import { tanksAPI, alertsAPI, rechargesAPI } from '../../services/apiV2.js';
+import { tanksAPI, alertsAPI, rechargesAPI, reportsAPI } from '../../services/apiV2.js';
 import { toast } from 'react-hot-toast';
 import Button from '../../components/Button';
 
@@ -121,6 +123,57 @@ const Reports = () => {
         a.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
+    };
+
+    // Nuevas funciones de exportación usando el backend
+    const exportGeneralReportPDF = async () => {
+        try {
+            const loadingToast = toast.loading('Generando informe PDF...');
+            const result = await reportsAPI.exportReport('general', 'pdf', {
+                startDate: dateRange.startDate,
+                endDate: dateRange.endDate,
+            });
+            toast.dismiss(loadingToast);
+            toast.success(`Informe PDF generado: ${result.filename || 'reporte.pdf'}`);
+        } catch (error) {
+            toast.dismiss();
+            const errorMessage = error.message || 'Error al generar el PDF';
+            toast.error(errorMessage);
+            console.error('Error detallado:', error);
+        }
+    };
+
+    const exportGeneralReportExcel = async () => {
+        try {
+            const loadingToast = toast.loading('Generando informe Excel...');
+            const result = await reportsAPI.exportReport('general', 'excel', {
+                startDate: dateRange.startDate,
+                endDate: dateRange.endDate,
+            });
+            toast.dismiss(loadingToast);
+            toast.success(`Informe Excel generado: ${result.filename || 'reporte.xlsx'}`);
+        } catch (error) {
+            toast.dismiss();
+            const errorMessage = error.message || 'Error al generar el Excel';
+            toast.error(errorMessage);
+            console.error('Error detallado:', error);
+        }
+    };
+
+    const previewGeneralReport = async () => {
+        try {
+            toast.loading('Generando vista previa...');
+            await reportsAPI.previewPDF('general', {
+                startDate: dateRange.startDate,
+                endDate: dateRange.endDate,
+            });
+            toast.dismiss();
+            toast.success('Vista previa abierta en nueva pestaña');
+        } catch (error) {
+            toast.dismiss();
+            toast.error('Error al generar vista previa');
+            console.error(error);
+        }
     };
 
     const exportTanksReport = () => {
@@ -263,6 +316,44 @@ const Reports = () => {
                         >
                             Reabastecimientos
                         </button>
+                    </div>
+                </CardBody>
+            </Card>
+
+            {/* Export Buttons Card */}
+            <Card>
+                <CardHeader>
+                    <h3 className="text-lg font-bold flex items-center gap-2">
+                        <Download className="text-purple-600" size={24} />
+                        Exportar Informe General
+                    </h3>
+                </CardHeader>
+                <CardBody>
+                    <div className="flex flex-wrap gap-3">
+                        <Button
+                            variant="primary"
+                            onClick={exportGeneralReportPDF}
+                            icon={<FileText size={18} />}
+                            className="flex items-center gap-2"
+                        >
+                            Exportar PDF
+                        </Button>
+                        <Button
+                            variant="success"
+                            onClick={exportGeneralReportExcel}
+                            icon={<FileSpreadsheet size={18} />}
+                            className="flex items-center gap-2"
+                        >
+                            Exportar Excel
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={previewGeneralReport}
+                            icon={<Eye size={18} />}
+                            className="flex items-center gap-2"
+                        >
+                            Vista Previa PDF
+                        </Button>
                     </div>
                 </CardBody>
             </Card>

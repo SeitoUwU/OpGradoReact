@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 
 export const SkeletonLine = ({ className = '' }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`}></div>
@@ -30,5 +30,13 @@ export const SkeletonTable = ({ rows = 5 }) => (
     ))}
   </div>
 );
+
+SkeletonLine.propTypes = {
+  className: PropTypes.string
+};
+
+SkeletonTable.propTypes = {
+  rows: PropTypes.number
+};
 
 export default SkeletonCard;

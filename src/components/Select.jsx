@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 
 const Select = ({
   label,
@@ -44,6 +44,19 @@ const Select = ({
       )}
     </div>
   );
+};
+
+Select.propTypes = {
+  label: PropTypes.string,
+  error: PropTypes.string,
+  options: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    label: PropTypes.string
+  })),
+  required: PropTypes.bool,
+  className: PropTypes.string,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onChange: PropTypes.func
 };
 
 export default Select;

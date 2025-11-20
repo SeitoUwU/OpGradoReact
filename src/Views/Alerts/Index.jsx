@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../AuthContext/AuthContextV2';
 import {
     Bell,
@@ -13,46 +13,42 @@ import {
     FileText
 } from 'lucide-react';
 import Card, { CardHeader, CardBody } from '../../components/Card';
-import { alertsAPI, tanksAPI } from '../../services/apiV2.js';
+import { alertsAPI } from '../../services/apiV2.js';
 import { toast } from 'react-hot-toast';
 import Button from '../../components/Button';
 
 const Alerts = () => {
     const { user } = useAuth();
     const [alerts, setAlerts] = useState([]);
-    const [tanks, setTanks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('active');
     const [selectedAlert, setSelectedAlert] = useState(null);
     const [showResolveModal, setShowResolveModal] = useState(false);
     const [resolveNotes, setResolveNotes] = useState('');
 
-    const isAdmin = user?.role?.toLowerCase() === 'admin';
-
-    useEffect(() => {
-        loadData();
-    }, [filter]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             setLoading(true);
-            const [alertsRes, tanksRes] = await Promise.all([
-                filter === 'active' ? alertsAPI.getActiveAlerts() : alertsAPI.getAlerts(),
-                tanksAPI.getTanks()
-            ]);
+            const alertsRes = filter === 'active' ? await alertsAPI.getActiveAlerts() : await alertsAPI.getAlerts();
             setAlerts(alertsRes.data || []);
-            setTanks(tanksRes.data || []);
         } catch (error) {
             console.error('Error cargando alertas:', error);
             toast.error('Error al cargar alertas');
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter]);
 
-    const getTankName = (tankId) => {
-        const tank = tanks.find(t => t.id === tankId);
-        return tank ? tank.name : 'Tanque Desconocido';
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    const getTankName = (alert) => {
+        // Las alertas vienen con el objeto tank incluido desde el backend
+        if (alert.tank) {
+            return alert.tank.code || alert.tank.name || 'Tanque Desconocido';
+        }
+        return 'Tanque Desconocido';
     };
 
     const getSeverityConfig = (severity) => {
@@ -328,7 +324,7 @@ const Alerts = () => {
                                                             {new Date(alert.createdAt).toLocaleString('es-CO')}
                                                         </span>
                                                         <span className="font-medium text-gray-700">
-                                                            {getTankName(alert.tankId)}
+                                                            {getTankName(alert)}
                                                         </span>
                                                     </div>
                                                 </div>

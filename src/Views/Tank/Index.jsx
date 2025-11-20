@@ -11,6 +11,7 @@ import Input from '../../components/Input';
 import Select from '../../components/Select';
 import Checkbox from '../../components/Checkbox';
 import EmptyState from '../../components/EmptyState';
+import TankHistoryChart from './components/TankHistoryChart';
 
 const TankIndex = () => {
   const { user } = useAuth();
@@ -637,57 +638,21 @@ const TankIndex = () => {
               </div>
             )}
 
-            {/* Historial de Monitoreo */}
-            <Card>
-              <CardBody>
-                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                  <TrendingDown size={20} className="text-blue-600" />
-                  Historial de Monitoreo (Últimas 20 lecturas)
-                </h3>
-                {loadingHistory ? (
+            {/* Historial de Monitoreo - Visualización Gráfica */}
+            {loadingHistory ? (
+              <Card>
+                <CardBody>
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                   </div>
-                ) : tankHistory.length === 0 ? (
-                  <EmptyState
-                    preset="empty"
-                    title="Sin historial"
-                    description="No hay registros de monitoreo para este tanque"
-                    icon={Activity}
-                  />
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-100 dark:bg-gray-800">
-                        <tr>
-                          <th className="px-4 py-2 text-left">Fecha y Hora</th>
-                          <th className="px-4 py-2 text-right">Nivel (%)</th>
-                          <th className="px-4 py-2 text-right">Nivel (L)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tankHistory.slice(0, 20).map((record, index) => (
-                          <tr key={index} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <td className="px-4 py-2">
-                              <div className="flex items-center gap-2">
-                                <Calendar size={14} className="text-gray-400" />
-                                {new Date(record.recordedAt).toLocaleString()}
-                              </div>
-                            </td>
-                            <td className={`px-4 py-2 text-right font-semibold ${getLevelColor(record.gasLevelPercentage || 0)}`}>
-                              {record.gasLevelPercentage?.toFixed(1) || 0}%
-                            </td>
-                            <td className="px-4 py-2 text-right">
-                              {record.gasLevelLiters?.toFixed(1) || 0}L
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </CardBody>
-            </Card>
+                </CardBody>
+              </Card>
+            ) : (
+              <TankHistoryChart
+                history={tankHistory}
+                tankCapacity={selectedTank?.capacityLiters || 0}
+              />
+            )}
 
             <div className="flex justify-end">
               <Button variant="secondary" onClick={() => setShowDetailModal(false)}>

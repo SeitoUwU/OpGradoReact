@@ -1,5 +1,5 @@
-import React from 'react';
 import { AlertCircle, Search, Users, FileText, Package } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 const EmptyState = ({
   preset,
@@ -66,6 +66,15 @@ const EmptyState = ({
       )}
     </div>
   );
+};
+
+EmptyState.propTypes = {
+  preset: PropTypes.oneOf(['error', 'search', 'users', 'data', 'empty']),
+  title: PropTypes.string,
+  description: PropTypes.string,
+  icon: PropTypes.elementType,
+  action: PropTypes.node,
+  className: PropTypes.string
 };
 
 export default EmptyState;

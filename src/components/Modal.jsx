@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { X } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 const Modal = ({
   isOpen,
@@ -62,6 +63,16 @@ const Modal = ({
       </div>
     </div>
   );
+};
+
+Modal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  title: PropTypes.string,
+  children: PropTypes.node,
+  size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl', 'full']),
+  showCloseButton: PropTypes.bool,
+  closeOnOverlayClick: PropTypes.bool
 };
 
 export default Modal;

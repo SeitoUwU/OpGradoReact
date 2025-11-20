@@ -1,5 +1,5 @@
-import React from 'react';
 import { Search } from 'lucide-react';
+import PropTypes from 'prop-types';
 import Select from './Select';
 import Button from './Button';
 
@@ -51,6 +51,17 @@ const SearchBar = ({
       </Button>
     </div>
   );
+};
+
+SearchBar.propTypes = {
+  searchType: PropTypes.string,
+  onSearchTypeChange: PropTypes.func,
+  searchQuery: PropTypes.string,
+  onSearchQueryChange: PropTypes.func,
+  onSearch: PropTypes.func,
+  searchTypeOptions: PropTypes.array,
+  placeholder: PropTypes.string,
+  loading: PropTypes.bool
 };
 
 export default SearchBar;

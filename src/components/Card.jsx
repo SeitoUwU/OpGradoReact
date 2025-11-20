@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 
 const Card = ({
   children,
@@ -21,6 +21,13 @@ const Card = ({
   );
 };
 
+Card.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
+  gradient: PropTypes.bool,
+  hover: PropTypes.bool
+};
+
 export const CardHeader = ({ children, className = '', ...props }) => {
   return (
     <div
@@ -30,6 +37,11 @@ export const CardHeader = ({ children, className = '', ...props }) => {
       {children}
     </div>
   );
+};
+
+CardHeader.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string
 };
 
 export const CardBody = ({ children, className = '', ...props }) => {
@@ -43,6 +55,11 @@ export const CardBody = ({ children, className = '', ...props }) => {
   );
 };
 
+CardBody.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string
+};
+
 export const CardFooter = ({ children, className = '', ...props }) => {
   return (
     <div
@@ -52,6 +69,11 @@ export const CardFooter = ({ children, className = '', ...props }) => {
       {children}
     </div>
   );
+};
+
+CardFooter.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string
 };
 
 export default Card;

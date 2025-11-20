@@ -11,12 +11,16 @@ import {
     AlertCircle,
     Play,
     Filter,
-    Truck
+    Truck,
+    List,
+    CalendarDays,
+    Gauge
 } from 'lucide-react';
 import Card, { CardHeader, CardBody } from '../../components/Card';
 import { rechargesAPI, tanksAPI } from '../../services/apiV2.js';
 import { toast } from 'react-hot-toast';
 import Button from '../../components/Button';
+import CalendarView from './CalendarView';
 
 const Recharges = () => {
     const { user } = useAuth();
@@ -24,14 +28,15 @@ const Recharges = () => {
     const [tanks, setTanks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('scheduled');
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+    const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedRecharge, setSelectedRecharge] = useState(null);
     const [formData, setFormData] = useState({
         tankId: '',
         scheduledDate: '',
         estimatedAmount: '',
-        priority: 'normal',
         notes: ''
     });
     const [rescheduleData, setRescheduleData] = useState({
@@ -62,9 +67,17 @@ const Recharges = () => {
         }
     };
 
-    const getTankName = (tankId) => {
-        const tank = tanks.find(t => t.id === tankId);
-        return tank ? tank.name : 'Tanque Desconocido';
+    const getTankName = (recharge) => {
+        // Las recargas vienen con el objeto tank incluido desde el backend
+        if (recharge.tank) {
+            return recharge.tank.code || recharge.tank.name || 'Tanque Desconocido';
+        }
+        // Fallback: buscar en la lista de tanques si no viene el objeto
+        if (recharge.tankId) {
+            const tank = tanks.find(t => t.id === recharge.tankId);
+            return tank ? (tank.code || tank.name) : 'Tanque Desconocido';
+        }
+        return 'Tanque Desconocido';
     };
 
     const getStatusConfig = (status) => {
@@ -120,21 +133,6 @@ const Recharges = () => {
         }
     };
 
-    const getPriorityBadge = (priority) => {
-        const priorities = {
-            'urgent': { label: 'Urgente', bg: 'bg-red-500' },
-            'high': { label: 'Alta', bg: 'bg-orange-500' },
-            'normal': { label: 'Normal', bg: 'bg-blue-500' },
-            'low': { label: 'Baja', bg: 'bg-gray-500' }
-        };
-        const config = priorities[priority] || { label: priority, bg: 'bg-gray-500' };
-        return (
-            <span className={`${config.bg} text-white text-xs px-2 py-1 rounded font-medium`}>
-                {config.label}
-            </span>
-        );
-    };
-
     const handleCreateRecharge = async (e) => {
         e.preventDefault();
 
@@ -147,8 +145,7 @@ const Recharges = () => {
             await rechargesAPI.createRecharge({
                 tankId: formData.tankId,
                 scheduledDate: formData.scheduledDate,
-                estimatedAmount: parseFloat(formData.estimatedAmount),
-                priority: formData.priority,
+                estimatedQuantityLiters: parseFloat(formData.estimatedAmount),
                 notes: formData.notes
             });
             toast.success('Reabastecimiento programado exitosamente');
@@ -157,7 +154,7 @@ const Recharges = () => {
             loadData();
         } catch (error) {
             console.error('Error creando reabastecimiento:', error);
-            toast.error('Error al programar reabastecimiento');
+            toast.error(error.response?.data?.message || 'Error al programar reabastecimiento');
         }
     };
 
@@ -212,7 +209,6 @@ const Recharges = () => {
             tankId: '',
             scheduledDate: '',
             estimatedAmount: '',
-            priority: 'normal',
             notes: ''
         });
     };
@@ -220,6 +216,11 @@ const Recharges = () => {
     const openRescheduleModal = (recharge) => {
         setSelectedRecharge(recharge);
         setShowRescheduleModal(true);
+    };
+
+    const openDetailModal = (recharge) => {
+        setSelectedRecharge(recharge);
+        setShowDetailModal(true);
     };
 
     const filteredRecharges = recharges.filter(recharge => {
@@ -253,14 +254,40 @@ const Recharges = () => {
                             </p>
                         </div>
                     </div>
-                    <Button
-                        variant="primary"
-                        className="bg-white text-blue-600 hover:bg-blue-50"
-                        onClick={() => setShowCreateModal(true)}
-                        icon={<Plus size={20} />}
-                    >
-                        Programar Reabastecimiento
-                    </Button>
+                    <div className="flex gap-3">
+                        <div className="flex gap-1 bg-white/20 rounded-lg p-1 backdrop-blur-sm">
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
+                                    viewMode === 'list'
+                                        ? 'bg-white text-blue-600 shadow-md'
+                                        : 'text-white hover:bg-white/10'
+                                }`}
+                            >
+                                <List size={18} />
+                                Lista
+                            </button>
+                            <button
+                                onClick={() => setViewMode('calendar')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
+                                    viewMode === 'calendar'
+                                        ? 'bg-white text-blue-600 shadow-md'
+                                        : 'text-white hover:bg-white/10'
+                                }`}
+                            >
+                                <CalendarDays size={18} />
+                                Calendario
+                            </button>
+                        </div>
+                        <Button
+                            variant="primary"
+                            className="bg-white text-blue-600 hover:bg-blue-50"
+                            onClick={() => setShowCreateModal(true)}
+                            icon={<Plus size={20} />}
+                        >
+                            Programar Reabastecimiento
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -323,57 +350,68 @@ const Recharges = () => {
                 </Card>
             </div>
 
-            {/* Filters */}
-            <Card>
-                <CardBody>
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <Filter className="text-gray-500" size={20} />
-                        <span className="text-gray-700 font-medium mr-2">Filtrar:</span>
-                        <button
-                            onClick={() => setFilter('scheduled')}
-                            className={`px-4 py-2 rounded-lg transition-all ${
-                                filter === 'scheduled'
-                                    ? 'bg-blue-500 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                        >
-                            Programados
-                        </button>
-                        <button
-                            onClick={() => setFilter('in_progress')}
-                            className={`px-4 py-2 rounded-lg transition-all ${
-                                filter === 'in_progress'
-                                    ? 'bg-yellow-500 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                        >
-                            En Progreso
-                        </button>
-                        <button
-                            onClick={() => setFilter('completed')}
-                            className={`px-4 py-2 rounded-lg transition-all ${
-                                filter === 'completed'
-                                    ? 'bg-green-500 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                        >
-                            Completados
-                        </button>
-                        <button
-                            onClick={() => setFilter('all')}
-                            className={`px-4 py-2 rounded-lg transition-all ${
-                                filter === 'all'
-                                    ? 'bg-purple-500 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                        >
-                            Todos
-                        </button>
-                    </div>
-                </CardBody>
-            </Card>
+            {/* Filters - Only show in list view */}
+            {viewMode === 'list' && (
+                <Card>
+                    <CardBody>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <Filter className="text-gray-500" size={20} />
+                            <span className="text-gray-700 font-medium mr-2">Filtrar:</span>
+                            <button
+                                onClick={() => setFilter('scheduled')}
+                                className={`px-4 py-2 rounded-lg transition-all ${
+                                    filter === 'scheduled'
+                                        ? 'bg-blue-500 text-white shadow-md'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                Programados
+                            </button>
+                            <button
+                                onClick={() => setFilter('in_progress')}
+                                className={`px-4 py-2 rounded-lg transition-all ${
+                                    filter === 'in_progress'
+                                        ? 'bg-yellow-500 text-white shadow-md'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                En Progreso
+                            </button>
+                            <button
+                                onClick={() => setFilter('completed')}
+                                className={`px-4 py-2 rounded-lg transition-all ${
+                                    filter === 'completed'
+                                        ? 'bg-green-500 text-white shadow-md'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                Completados
+                            </button>
+                            <button
+                                onClick={() => setFilter('all')}
+                                className={`px-4 py-2 rounded-lg transition-all ${
+                                    filter === 'all'
+                                        ? 'bg-purple-500 text-white shadow-md'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                Todos
+                            </button>
+                        </div>
+                    </CardBody>
+                </Card>
+            )}
 
-            {/* Recharges List */}
+            {/* Calendar View */}
+            {viewMode === 'calendar' ? (
+                <CalendarView
+                    recharges={recharges}
+                    tanks={tanks}
+                    onEventClick={openDetailModal}
+                />
+            ) : (
+                <>
+                    {/* Recharges List */}
             <div className="grid grid-cols-1 gap-4">
                 {filteredRecharges.length === 0 ? (
                     <Card>
@@ -409,12 +447,11 @@ const Recharges = () => {
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <h3 className="text-lg font-bold text-gray-900">
-                                                            {getTankName(recharge.tankId)}
+                                                            {getTankName(recharge)}
                                                         </h3>
                                                         <span className={`${statusConfig.badgeBg} text-white text-xs px-3 py-1 rounded-full font-medium`}>
                                                             {statusConfig.label}
                                                         </span>
-                                                        {getPriorityBadge(recharge.priority)}
                                                     </div>
                                                     <div className="flex items-center gap-4 text-sm text-gray-600">
                                                         <span className="flex items-center gap-1">
@@ -481,96 +518,344 @@ const Recharges = () => {
                     })
                 )}
             </div>
+                </>
+            )}
 
-            {/* Create Modal */}
-            {showCreateModal && (
+            {/* Detail Modal - for calendar events */}
+            {showDetailModal && selectedRecharge && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <Card className="max-w-2xl w-full">
                         <CardHeader>
                             <h3 className="text-xl font-bold flex items-center gap-2">
-                                <Plus className="text-blue-600" size={24} />
-                                Programar Reabastecimiento
+                                <Container className="text-blue-600" size={24} />
+                                Detalles del Reabastecimiento
                             </h3>
                         </CardHeader>
                         <CardBody>
-                            <form onSubmit={handleCreateRecharge} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Tanque *
-                                    </label>
-                                    <select
-                                        value={formData.tankId}
-                                        onChange={(e) => setFormData({ ...formData, tankId: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required
-                                    >
-                                        <option value="">Seleccionar tanque</option>
-                                        {userTanks.map(tank => (
-                                            <option key={tank.id} value={tank.id}>
-                                                {tank.name} - {tank.location}
-                                            </option>
-                                        ))}
-                                    </select>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600">Tanque</p>
+                                        <p className="text-lg font-semibold text-gray-900">
+                                            {getTankName(selectedRecharge)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600">Estado</p>
+                                        <div className="mt-1">
+                                            {(() => {
+                                                const statusConfig = getStatusConfig(selectedRecharge.status);
+                                                return (
+                                                    <span className={`${statusConfig.badgeBg} text-white text-sm px-3 py-1 rounded-full font-medium`}>
+                                                        {statusConfig.label}
+                                                    </span>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600">Fecha Programada</p>
+                                        <p className="text-lg font-semibold text-gray-900">
+                                            {new Date(selectedRecharge.scheduledDate).toLocaleString('es-CO')}
+                                        </p>
+                                    </div>
+                                    {selectedRecharge.estimatedQuantityLiters && (
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600">Cantidad Estimada</p>
+                                            <p className="text-lg font-semibold text-gray-900">
+                                                {selectedRecharge.estimatedQuantityLiters} Litros
+                                            </p>
+                                        </div>
+                                    )}
+                                    {selectedRecharge.completedAt && (
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600">Completado</p>
+                                            <p className="text-lg font-semibold text-green-600">
+                                                {new Date(selectedRecharge.completedAt).toLocaleString('es-CO')}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Fecha y Hora Programada *
-                                    </label>
-                                    <input
-                                        type="datetime-local"
-                                        value={formData.scheduledDate}
-                                        onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required
-                                    />
+                                {selectedRecharge.notes && (
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 mb-2">Notas</p>
+                                        <p className="p-3 bg-gray-50 rounded-lg text-gray-700">
+                                            {selectedRecharge.notes}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Actions */}
+                                <div className="pt-4 border-t">
+                                    {selectedRecharge.status === 'scheduled' ? (
+                                        <div className="flex gap-2 justify-end">
+                                            {isAdmin && (
+                                                <Button
+                                                    variant="primary"
+                                                    onClick={() => {
+                                                        setShowDetailModal(false);
+                                                        handleStart(selectedRecharge.id);
+                                                    }}
+                                                    icon={<Play size={16} />}
+                                                >
+                                                    Iniciar
+                                                </Button>
+                                            )}
+                                            <Button
+                                                variant="warning"
+                                                onClick={() => {
+                                                    setShowDetailModal(false);
+                                                    openRescheduleModal(selectedRecharge);
+                                                }}
+                                                icon={<Edit size={16} />}
+                                            >
+                                                Reprogramar
+                                            </Button>
+                                            <Button
+                                                variant="danger"
+                                                onClick={() => {
+                                                    setShowDetailModal(false);
+                                                    handleCancel(selectedRecharge.id);
+                                                }}
+                                                icon={<XCircle size={16} />}
+                                            >
+                                                Cancelar
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex justify-end">
+                                            <Button
+                                                variant="secondary"
+                                                onClick={() => setShowDetailModal(false)}
+                                            >
+                                                Cerrar
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </CardBody>
+                    </Card>
+                </div>
+            )}
+
+            {/* Create Modal - Mejorado */}
+            {showCreateModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <Card className="max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                        <Truck size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold">Programar Reabastecimiento</h3>
+                                        <p className="text-blue-100 text-sm mt-1">Complete los datos para programar el servicio</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setShowCreateModal(false);
+                                        resetForm();
+                                    }}
+                                    className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+                                >
+                                    <XCircle size={24} />
+                                </button>
+                            </div>
+                        </CardHeader>
+                        <CardBody>
+                            <form onSubmit={handleCreateRecharge} className="space-y-6">
+                                {/* Información del tanque seleccionado */}
+                                {formData.tankId && tanks.find(t => t.id === formData.tankId) && (() => {
+                                    const selectedTank = tanks.find(t => t.id === formData.tankId);
+                                    const nivelActual = selectedTank.currentLevelPercentage || 0;
+                                    const capacidadRestante = selectedTank.capacityLiters - selectedTank.currentLevelLiters;
+
+                                    return (
+                                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                            <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                                                <Container size={18} />
+                                                Información del Tanque
+                                            </h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                                <div>
+                                                    <p className="text-blue-600 font-medium">Código</p>
+                                                    <p className="text-blue-900 font-bold">{selectedTank.code}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-blue-600 font-medium">Nivel Actual</p>
+                                                    <p className="text-blue-900 font-bold">{nivelActual.toFixed(1)}%</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-blue-600 font-medium">Capacidad Total</p>
+                                                    <p className="text-blue-900 font-bold">{selectedTank.capacityLiters} L</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-blue-600 font-medium">Espacio Disponible</p>
+                                                    <p className="text-blue-900 font-bold">{capacidadRestante.toFixed(0)} L</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Seleccionar Tanque *
+                                        </label>
+                                        <div className="relative">
+                                            <Container className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                            <select
+                                                value={formData.tankId}
+                                                onChange={(e) => setFormData({ ...formData, tankId: e.target.value })}
+                                                className="w-full pl-11 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                                required
+                                            >
+                                                <option value="">Seleccione un tanque</option>
+                                                {userTanks.map(tank => (
+                                                    <option key={tank.id} value={tank.id}>
+                                                        {tank.code} - {tank.location} ({tank.currentLevelPercentage?.toFixed(1)}% - {tank.capacityLiters}L)
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Fecha y Hora *
+                                        </label>
+                                        <div className="relative">
+                                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                            <input
+                                                type="datetime-local"
+                                                value={formData.scheduledDate}
+                                                onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
+                                                min={new Date().toISOString().slice(0, 16)}
+                                                className="w-full pl-11 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                                required
+                                            />
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">Seleccione la fecha y hora del servicio</p>
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Cantidad a Reabastecer *
+                                        </label>
+
+                                        {/* Botones de opciones rápidas */}
+                                        {formData.tankId && tanks.find(t => t.id === formData.tankId) && (() => {
+                                            const selectedTank = tanks.find(t => t.id === formData.tankId);
+                                            const capacidadRestante = selectedTank.capacityLiters - selectedTank.currentLevelLiters;
+                                            const mediaCarga = capacidadRestante / 2;
+                                            const tresCuartos = (capacidadRestante * 0.75);
+
+                                            return (
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, estimatedAmount: capacidadRestante.toFixed(2) })}
+                                                        className="p-3 bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-lg hover:shadow-md transition-all text-left"
+                                                    >
+                                                        <div className="text-xs text-green-600 font-medium mb-1">Llenar Tanque</div>
+                                                        <div className="text-lg font-bold text-green-700">{capacidadRestante.toFixed(0)} L</div>
+                                                        <div className="text-xs text-green-600">100% capacidad</div>
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, estimatedAmount: tresCuartos.toFixed(2) })}
+                                                        className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-lg hover:shadow-md transition-all text-left"
+                                                    >
+                                                        <div className="text-xs text-blue-600 font-medium mb-1">3/4 de Tanque</div>
+                                                        <div className="text-lg font-bold text-blue-700">{tresCuartos.toFixed(0)} L</div>
+                                                        <div className="text-xs text-blue-600">75% capacidad</div>
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, estimatedAmount: mediaCarga.toFixed(2) })}
+                                                        className="p-3 bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-200 rounded-lg hover:shadow-md transition-all text-left"
+                                                    >
+                                                        <div className="text-xs text-yellow-600 font-medium mb-1">Media Carga</div>
+                                                        <div className="text-lg font-bold text-yellow-700">{mediaCarga.toFixed(0)} L</div>
+                                                        <div className="text-xs text-yellow-600">50% capacidad</div>
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, estimatedAmount: '' })}
+                                                        className="p-3 bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-lg hover:shadow-md transition-all text-left"
+                                                    >
+                                                        <div className="text-xs text-gray-600 font-medium mb-1">Personalizar</div>
+                                                        <div className="text-lg font-bold text-gray-700">✏️</div>
+                                                        <div className="text-xs text-gray-600">Cantidad manual</div>
+                                                    </button>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Input manual */}
+                                        <div className="relative">
+                                            <Gauge className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                            <input
+                                                type="number"
+                                                value={formData.estimatedAmount}
+                                                onChange={(e) => setFormData({ ...formData, estimatedAmount: e.target.value })}
+                                                className="w-full pl-11 pr-20 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                                placeholder="Ingrese la cantidad en litros"
+                                                min="1"
+                                                step="0.01"
+                                                required
+                                            />
+                                            <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                                                Litros
+                                            </span>
+                                        </div>
+                                        {formData.estimatedAmount && formData.tankId && tanks.find(t => t.id === formData.tankId) && (() => {
+                                            const selectedTank = tanks.find(t => t.id === formData.tankId);
+                                            const capacidadRestante = selectedTank.capacityLiters - selectedTank.currentLevelLiters;
+                                            const cantidad = parseFloat(formData.estimatedAmount);
+                                            const porcentaje = ((cantidad / capacidadRestante) * 100).toFixed(1);
+
+                                            return (
+                                                <p className="text-xs text-gray-600 mt-2 flex items-center gap-2">
+                                                    <span className={`px-2 py-1 rounded ${
+                                                        cantidad > capacidadRestante
+                                                            ? 'bg-red-100 text-red-700'
+                                                            : 'bg-green-100 text-green-700'
+                                                    }`}>
+                                                        {cantidad > capacidadRestante
+                                                            ? '⚠️ Excede la capacidad disponible'
+                                                            : `✓ ${porcentaje}% del espacio disponible`
+                                                        }
+                                                    </span>
+                                                </p>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Notas o Instrucciones Especiales
+                                        </label>
+                                        <textarea
+                                            value={formData.notes}
+                                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                                            rows="4"
+                                            placeholder="Agregue cualquier información adicional, instrucciones especiales o comentarios..."
+                                        />
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Cantidad Estimada (Litros) *
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={formData.estimatedAmount}
-                                        onChange={(e) => setFormData({ ...formData, estimatedAmount: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="1000"
-                                        min="1"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Prioridad
-                                    </label>
-                                    <select
-                                        value={formData.priority}
-                                        onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="low">Baja</option>
-                                        <option value="normal">Normal</option>
-                                        <option value="high">Alta</option>
-                                        <option value="urgent">Urgente</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Notas
-                                    </label>
-                                    <textarea
-                                        value={formData.notes}
-                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        rows="3"
-                                        placeholder="Información adicional..."
-                                    />
-                                </div>
-
-                                <div className="flex gap-2 justify-end">
+                                {/* Botones de acción */}
+                                <div className="flex gap-3 justify-end pt-4 border-t">
                                     <Button
                                         type="button"
                                         variant="secondary"
@@ -578,11 +863,17 @@ const Recharges = () => {
                                             setShowCreateModal(false);
                                             resetForm();
                                         }}
+                                        icon={<XCircle size={18} />}
                                     >
                                         Cancelar
                                     </Button>
-                                    <Button type="submit" variant="primary" icon={<CheckCircle size={16} />}>
-                                        Programar
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        icon={<CheckCircle size={18} />}
+                                        className="px-6"
+                                    >
+                                        Confirmar Programación
                                     </Button>
                                 </div>
                             </form>
