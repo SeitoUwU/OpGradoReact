@@ -118,6 +118,11 @@ export const tanksAPI = {
     body: JSON.stringify(sensorData),
   }),
 
+  assignClient: async (id, clientId) => fetchAPI(`/tanks/${id}/assign-client`, {
+    method: 'PATCH',
+    body: JSON.stringify({ clientId }),
+  }),
+
   deleteTank: async (id) => fetchAPI(`/tanks/${id}`, { method: 'DELETE' }),
 };
 

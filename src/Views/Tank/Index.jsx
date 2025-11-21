@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Container, Plus, Filter, X, Gauge, Users, Building2, MapPin, Droplets, Calendar, Activity, TrendingDown } from 'lucide-react';
+import { Container, Plus, Filter, X, Gauge, Users, Building2, MapPin, Droplets, Calendar, Activity, TrendingDown, Edit2, Save, UserPlus } from 'lucide-react';
 import { useAuth } from '../../AuthContext/AuthContextV2';
 import { tanksAPI, usersAPI } from '../../services/apiV2.js';
 import Button from '../../components/Button';
@@ -25,6 +25,12 @@ const TankIndex = () => {
   const [tankHistory, setTankHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showEditCapacityModal, setShowEditCapacityModal] = useState(false);
+  const [newCapacity, setNewCapacity] = useState('');
+  const [capacityMode, setCapacityMode] = useState('set'); // 'set' o 'add'
+  const [capacityToAdd, setCapacityToAdd] = useState('');
+  const [assigningClient, setAssigningClient] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState('');
 
   const [filters, setFilters] = useState({
     clientId: '',
@@ -172,6 +178,11 @@ const TankIndex = () => {
 
   const handleTankClick = async (tank) => {
     setSelectedTank(tank);
+    setNewCapacity(tank.capacityLiters);
+    setCapacityToAdd('');
+    setCapacityMode('set');
+    setSelectedClientId(tank.client?.id || '');
+    setAssigningClient(false);
     setShowDetailModal(true);
     setLoadingHistory(true);
     try {
@@ -186,6 +197,71 @@ const TankIndex = () => {
       setTankHistory([]);
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  const handleOpenEditCapacity = () => {
+    setNewCapacity(selectedTank.capacityLiters);
+    setCapacityToAdd('');
+    setCapacityMode('set');
+    setShowEditCapacityModal(true);
+  };
+
+  const handleUpdateCapacity = async () => {
+    let finalCapacity;
+
+    if (capacityMode === 'set') {
+      if (!newCapacity || newCapacity <= 0) {
+        toast.error('La capacidad debe ser mayor a 0');
+        return;
+      }
+      finalCapacity = parseFloat(newCapacity);
+    } else {
+      // Modo agregar
+      if (!capacityToAdd || capacityToAdd <= 0) {
+        toast.error('La cantidad a agregar debe ser mayor a 0');
+        return;
+      }
+      finalCapacity = parseFloat(selectedTank.capacityLiters) + parseFloat(capacityToAdd);
+    }
+
+    try {
+      setSaving(true);
+      await tanksAPI.updateTank(selectedTank.id, { capacityLiters: finalCapacity });
+
+      const message = capacityMode === 'set'
+        ? 'Capacidad actualizada exitosamente'
+        : `Se agregaron ${capacityToAdd}L a la capacidad del tanque`;
+
+      toast.success(message);
+      setShowEditCapacityModal(false);
+
+      // Actualizar el tanque en la lista
+      const updatedTank = await tanksAPI.getTankById(selectedTank.id);
+      setSelectedTank(updatedTank);
+      setTanks(tanks.map(t => t.id === selectedTank.id ? updatedTank : t));
+    } catch (error) {
+      toast.error(error.message || 'Error al actualizar capacidad');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAssignClient = async () => {
+    try {
+      setSaving(true);
+      await tanksAPI.assignClient(selectedTank.id, selectedClientId || null);
+      toast.success(selectedClientId ? 'Cliente asignado exitosamente' : 'Cliente desasignado exitosamente');
+      setAssigningClient(false);
+
+      // Actualizar el tanque en la lista
+      const updatedTank = await tanksAPI.getTankById(selectedTank.id);
+      setSelectedTank(updatedTank);
+      setTanks(tanks.map(t => t.id === selectedTank.id ? updatedTank : t));
+    } catch (error) {
+      toast.error(error.message || 'Error al asignar cliente');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -530,7 +606,7 @@ const TankIndex = () => {
                         {selectedTank.status}
                       </Badge>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-600 dark:text-gray-400">Capacidad:</span>
                       <span className="font-semibold">{selectedTank.capacityLiters}L</span>
                     </div>
@@ -543,6 +619,19 @@ const TankIndex = () => {
                       </div>
                     )}
                   </div>
+                  {user?.role?.toLowerCase() === 'admin' && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon={<Edit2 size={16} />}
+                        onClick={handleOpenEditCapacity}
+                        className="w-full"
+                      >
+                        Modificar Capacidad
+                      </Button>
+                    </div>
+                  )}
                 </CardBody>
               </Card>
 
@@ -576,15 +665,28 @@ const TankIndex = () => {
             </div>
 
             {/* Cliente y Sensor */}
-            {(selectedTank.client || selectedTank.sensor) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {selectedTank.client && (
-                  <Card>
-                    <CardBody>
-                      <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                        <Users size={20} className="text-purple-600" />
-                        Cliente
-                      </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Cliente */}
+              <Card>
+                <CardBody>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-lg flex items-center gap-2">
+                      <Users size={20} className="text-purple-600" />
+                      Cliente
+                    </h3>
+                    {user?.role?.toLowerCase() === 'admin' && !assigningClient && (
+                      <button
+                        onClick={() => setAssigningClient(true)}
+                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                        title={selectedTank.client ? "Reasignar cliente" : "Asignar cliente"}
+                      >
+                        <UserPlus size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  {!assigningClient ? (
+                    selectedTank.client ? (
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Nombre:</span>
@@ -601,42 +703,84 @@ const TankIndex = () => {
                           </div>
                         )}
                       </div>
-                    </CardBody>
-                  </Card>
-                )}
-
-                {selectedTank.sensor && (
-                  <Card>
-                    <CardBody>
-                      <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                        <Gauge size={20} className="text-orange-600" />
-                        Sensor
-                      </h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Serial:</span>
-                          <span className="font-semibold text-xs">{selectedTank.sensor.serialNumber}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Estado:</span>
-                          <Badge variant={selectedTank.sensor.status === 'active' ? 'success' : 'secondary'} size="sm">
-                            {selectedTank.sensor.status}
-                          </Badge>
-                        </div>
-                        {selectedTank.sensor.lastReadingDate && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Última lectura:</span>
-                            <span className="font-semibold text-xs">
-                              {new Date(selectedTank.sensor.lastReadingDate).toLocaleString()}
-                            </span>
-                          </div>
-                        )}
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-gray-500">Sin cliente asignado</p>
                       </div>
-                    </CardBody>
-                  </Card>
-                )}
-              </div>
-            )}
+                    )
+                  ) : (
+                    <div className="space-y-3">
+                      <Select
+                        label="Seleccionar Cliente"
+                        value={selectedClientId}
+                        onChange={setSelectedClientId}
+                        options={[
+                          { value: '', label: 'Sin cliente (desasignar)' },
+                          ...clients.filter(c => c.isActive !== false).map(c => ({
+                            value: c.id,
+                            label: `${c.firstName} ${c.lastName} - ${c.identificationNumber || c.email}`
+                          }))
+                        ]}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleAssignClient}
+                          loading={saving}
+                          icon={<Save size={14} />}
+                        >
+                          Guardar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setAssigningClient(false);
+                            setSelectedClientId(selectedTank.client?.id || '');
+                          }}
+                          disabled={saving}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardBody>
+              </Card>
+
+              {/* Sensor */}
+              {selectedTank.sensor && (
+                <Card>
+                  <CardBody>
+                    <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                      <Gauge size={20} className="text-orange-600" />
+                      Sensor
+                    </h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Serial:</span>
+                        <span className="font-semibold text-xs">{selectedTank.sensor.serialNumber}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Estado:</span>
+                        <Badge variant={selectedTank.sensor.status === 'active' ? 'success' : 'secondary'} size="sm">
+                          {selectedTank.sensor.status}
+                        </Badge>
+                      </div>
+                      {selectedTank.sensor.lastReadingDate && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Última lectura:</span>
+                          <span className="font-semibold text-xs">
+                            {new Date(selectedTank.sensor.lastReadingDate).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </CardBody>
+                </Card>
+              )}
+            </div>
 
             {/* Historial de Monitoreo - Visualización Gráfica */}
             {loadingHistory ? (
@@ -657,6 +801,126 @@ const TankIndex = () => {
             <div className="flex justify-end">
               <Button variant="secondary" onClick={() => setShowDetailModal(false)}>
                 Cerrar
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal Modificar Capacidad */}
+      <Modal
+        isOpen={showEditCapacityModal}
+        onClose={() => setShowEditCapacityModal(false)}
+        title="Modificar Capacidad del Tanque"
+        size="md"
+      >
+        {selectedTank && (
+          <div className="space-y-6">
+            {/* Info del tanque */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <Container size={24} className="text-blue-600" />
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100">{selectedTank.code}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Capacidad actual: <span className="font-bold">{selectedTank.capacityLiters}L</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Selector de modo */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                ¿Qué deseas hacer?
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setCapacityMode('set')}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    capacityMode === 'set'
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  <Edit2 size={20} className={`mx-auto mb-2 ${capacityMode === 'set' ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <p className={`text-sm font-medium ${capacityMode === 'set' ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'}`}>
+                    Establecer nueva capacidad
+                  </p>
+                </button>
+                <button
+                  onClick={() => setCapacityMode('add')}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    capacityMode === 'add'
+                      ? 'border-green-600 bg-green-50 dark:bg-green-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  <Plus size={20} className={`mx-auto mb-2 ${capacityMode === 'add' ? 'text-green-600' : 'text-gray-400'}`} />
+                  <p className={`text-sm font-medium ${capacityMode === 'add' ? 'text-green-600' : 'text-gray-600 dark:text-gray-400'}`}>
+                    Ampliar capacidad
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            {/* Inputs según modo */}
+            {capacityMode === 'set' ? (
+              <div className="space-y-2">
+                <Input
+                  label="Nueva capacidad (Litros)"
+                  type="number"
+                  value={newCapacity}
+                  onChange={(e) => setNewCapacity(e.target.value)}
+                  placeholder="Ej: 500"
+                  min="1"
+                  required
+                />
+                <p className="text-xs text-gray-500">
+                  Establece una nueva capacidad total para el tanque
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Input
+                  label="Capacidad a agregar (Litros)"
+                  type="number"
+                  value={capacityToAdd}
+                  onChange={(e) => setCapacityToAdd(e.target.value)}
+                  placeholder="Ej: 100"
+                  min="1"
+                  required
+                />
+                {capacityToAdd && parseFloat(capacityToAdd) > 0 && (
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="font-semibold text-green-600 dark:text-green-400">Nueva capacidad:</span>{' '}
+                      {selectedTank.capacityLiters}L + {capacityToAdd}L = {' '}
+                      <span className="font-bold text-green-700 dark:text-green-300">
+                        {(parseFloat(selectedTank.capacityLiters) + parseFloat(capacityToAdd)).toFixed(0)}L
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Botones */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                variant="ghost"
+                onClick={() => setShowEditCapacityModal(false)}
+                disabled={saving}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                icon={<Save size={20} />}
+                onClick={handleUpdateCapacity}
+                loading={saving}
+              >
+                Guardar Cambios
               </Button>
             </div>
           </div>

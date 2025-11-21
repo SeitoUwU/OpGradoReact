@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Users, UserPlus, Mail, Building2, Hash, Shield, Save } from 'lucide-react';
+import { Users, UserPlus, Mail, Building2, Hash, Shield, Save, Edit2, UserMinus, Phone, MapPin } from 'lucide-react';
 import { useAuth } from '../../AuthContext/AuthContextV2';
 import { authAPI, usersAPI } from '../../services/apiV2.js';
 import Button from '../../components/Button';
@@ -16,6 +16,9 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [editingUser, setEditingUser] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [newUser, setNewUser] = useState({
@@ -128,6 +131,54 @@ const UserManagement = () => {
     setFormErrors({});
   };
 
+  const handleUserClick = (usr) => {
+    setSelectedUser(usr);
+    setEditingUser(false);
+    setShowDetailModal(true);
+  };
+
+  const handleEditUser = () => {
+    setEditingUser(true);
+  };
+
+  const handleSaveUser = async () => {
+    try {
+      setSaving(true);
+      await usersAPI.update(selectedUser.id, {
+        firstName: selectedUser.firstName,
+        lastName: selectedUser.lastName,
+        phone: selectedUser.phone,
+        company: selectedUser.company,
+        address: selectedUser.address
+      });
+      toast.success('Usuario actualizado exitosamente');
+      setEditingUser(false);
+      fetchUsers();
+    } catch (error) {
+      toast.error(error.message || 'Error al actualizar usuario');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeactivateUser = async () => {
+    if (!confirm(`¿Estás seguro de dar de baja a ${selectedUser.firstName} ${selectedUser.lastName}?\n\nEsto liberará todos sus tanques asignados.`)) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await usersAPI.delete(selectedUser.id);
+      toast.success('Usuario dado de baja exitosamente. Sus tanques han sido liberados.');
+      setShowDetailModal(false);
+      fetchUsers();
+    } catch (error) {
+      toast.error(error.message || 'Error al dar de baja usuario');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (user?.role?.toLowerCase() !== 'admin') {
     return <EmptyState preset="error" title="Acceso Denegado" icon={Shield} />;
   }
@@ -148,7 +199,7 @@ const UserManagement = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {users.map((usr) => (
-              <Card key={usr.id} gradient>
+              <Card key={usr.id} gradient hover onClick={() => handleUserClick(usr)} className="cursor-pointer">
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <div className={`p-3 rounded-xl ${usr.role?.toLowerCase() === 'admin' ? 'bg-red-500' : 'bg-blue-500'}`}>
@@ -156,7 +207,12 @@ const UserManagement = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-lg">{usr.firstName} {usr.lastName}</h3>
-                      <Badge variant={usr.role?.toLowerCase() === 'admin' ? 'danger' : 'info'} size="sm">{usr.role}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={usr.role?.toLowerCase() === 'admin' ? 'danger' : 'info'} size="sm">{usr.role}</Badge>
+                        {usr.isActive === false && (
+                          <Badge variant="secondary" size="sm">Inactivo</Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
@@ -205,6 +261,175 @@ const UserManagement = () => {
             <Button variant="primary" icon={<Save size={20} />} onClick={handleCreateUser} loading={saving}>Crear Usuario</Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Modal Detalle/Edición Usuario */}
+      <Modal
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        title={editingUser ? 'Editar Usuario' : 'Detalle del Usuario'}
+        size="lg"
+      >
+        {selectedUser && (
+          <div className="space-y-6">
+            {/* Header con info básica */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-center gap-4">
+                <div className={`p-4 rounded-xl ${selectedUser.role?.toLowerCase() === 'admin' ? 'bg-red-500' : 'bg-blue-500'}`}>
+                  <Shield className="text-white" size={32} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    {selectedUser.firstName} {selectedUser.lastName}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant={selectedUser.role?.toLowerCase() === 'admin' ? 'danger' : 'info'}>{selectedUser.role}</Badge>
+                    <Badge variant={selectedUser.isActive !== false ? 'success' : 'secondary'}>
+                      {selectedUser.isActive !== false ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Información del usuario */}
+            {!editingUser ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Email</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Mail size={16} className="text-gray-400" />
+                      <p className="text-sm font-semibold">{selectedUser.email}</p>
+                    </div>
+                  </div>
+
+                  {selectedUser.phone && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Teléfono</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Phone size={16} className="text-gray-400" />
+                        <p className="text-sm font-semibold">{selectedUser.phone}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedUser.identificationNumber && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Identificación</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Hash size={16} className="text-gray-400" />
+                        <p className="text-sm font-semibold">
+                          {selectedUser.identificationType?.toUpperCase()}: {selectedUser.identificationNumber}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedUser.company && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Empresa</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Building2 size={16} className="text-gray-400" />
+                        <p className="text-sm font-semibold">{selectedUser.company}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {selectedUser.address && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Dirección</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <MapPin size={16} className="text-gray-400" />
+                      <p className="text-sm font-semibold">{selectedUser.address}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Botones de acción */}
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    variant="primary"
+                    icon={<Edit2 size={18} />}
+                    onClick={handleEditUser}
+                    className="flex-1"
+                  >
+                    Editar Usuario
+                  </Button>
+                  {selectedUser.isActive !== false && selectedUser.role?.toLowerCase() !== 'admin' && (
+                    <Button
+                      variant="danger"
+                      icon={<UserMinus size={18} />}
+                      onClick={handleDeactivateUser}
+                      loading={saving}
+                      className="flex-1"
+                    >
+                      Dar de Baja
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="Nombre"
+                    value={selectedUser.firstName}
+                    onChange={(e) => setSelectedUser({...selectedUser, firstName: e.target.value})}
+                    required
+                  />
+                  <Input
+                    label="Apellido"
+                    value={selectedUser.lastName}
+                    onChange={(e) => setSelectedUser({...selectedUser, lastName: e.target.value})}
+                    required
+                  />
+                  <Input
+                    label="Teléfono"
+                    value={selectedUser.phone || ''}
+                    onChange={(e) => setSelectedUser({...selectedUser, phone: e.target.value})}
+                  />
+                  <Input
+                    label="Empresa"
+                    value={selectedUser.company || ''}
+                    onChange={(e) => setSelectedUser({...selectedUser, company: e.target.value})}
+                  />
+                </div>
+
+                <Input
+                  label="Dirección"
+                  value={selectedUser.address || ''}
+                  onChange={(e) => setSelectedUser({...selectedUser, address: e.target.value})}
+                />
+
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    <strong>Nota:</strong> El email, rol y tipo de identificación no se pueden modificar.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setEditingUser(false)}
+                    disabled={saving}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="primary"
+                    icon={<Save size={18} />}
+                    onClick={handleSaveUser}
+                    loading={saving}
+                  >
+                    Guardar Cambios
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
     </>
   );

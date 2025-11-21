@@ -26,6 +26,71 @@ const TankHistoryChart = ({ history, tankCapacity }) => {
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [chartType, setChartType] = useState('area');
 
+  // Función para agrupar por hora
+  const groupByHour = (data) => {
+    const map = new Map();
+    data.forEach(record => {
+      const date = new Date(record.recordedAt);
+      const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}`;
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key).push(record);
+    });
+
+    return Array.from(map.values()).map(group => ({
+      recordedAt: group[group.length - 1].recordedAt,
+      gasLevelPercentage: group.reduce((sum, r) => sum + r.gasLevelPercentage, 0) / group.length,
+      gasLevelLiters: group.reduce((sum, r) => sum + r.gasLevelLiters, 0) / group.length,
+      count: group.length
+    }));
+  };
+
+  // Función para agrupar cada 6 horas
+  const groupBySixHours = (data) => {
+    const map = new Map();
+    data.forEach(record => {
+      const date = new Date(record.recordedAt);
+      const hourBlock = Math.floor(date.getHours() / 6);
+      const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${hourBlock}`;
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key).push(record);
+    });
+
+    return Array.from(map.values()).map(group => ({
+      recordedAt: group[Math.floor(group.length / 2)].recordedAt,
+      gasLevelPercentage: group.reduce((sum, r) => sum + r.gasLevelPercentage, 0) / group.length,
+      gasLevelLiters: group.reduce((sum, r) => sum + r.gasLevelLiters, 0) / group.length,
+      count: group.length
+    }));
+  };
+
+  // Función para agrupar por día
+  const groupByDay = (data) => {
+    const map = new Map();
+    data.forEach(record => {
+      const date = new Date(record.recordedAt);
+      const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key).push(record);
+    });
+
+    return Array.from(map.values()).map(group => {
+      // Tomar el registro del mediodía o el del medio
+      const middleIndex = Math.floor(group.length / 2);
+      return {
+        recordedAt: group[middleIndex].recordedAt,
+        gasLevelPercentage: group.reduce((sum, r) => sum + r.gasLevelPercentage, 0) / group.length,
+        gasLevelLiters: group.reduce((sum, r) => sum + r.gasLevelLiters, 0) / group.length,
+        count: group.length
+      };
+    });
+  };
+
   // Procesar y filtrar datos
   const processedData = useMemo(() => {
     if (!history || history.length === 0) return [];
@@ -94,71 +159,6 @@ const TankHistoryChart = ({ history, tankCapacity }) => {
       };
     });
   }, [history, selectedPeriod]);
-
-  // Función para agrupar por hora
-  const groupByHour = (data) => {
-    const map = new Map();
-    data.forEach(record => {
-      const date = new Date(record.recordedAt);
-      const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}`;
-      if (!map.has(key)) {
-        map.set(key, []);
-      }
-      map.get(key).push(record);
-    });
-
-    return Array.from(map.values()).map(group => ({
-      recordedAt: group[group.length - 1].recordedAt,
-      gasLevelPercentage: group.reduce((sum, r) => sum + r.gasLevelPercentage, 0) / group.length,
-      gasLevelLiters: group.reduce((sum, r) => sum + r.gasLevelLiters, 0) / group.length,
-      count: group.length
-    }));
-  };
-
-  // Función para agrupar cada 6 horas
-  const groupBySixHours = (data) => {
-    const map = new Map();
-    data.forEach(record => {
-      const date = new Date(record.recordedAt);
-      const hourBlock = Math.floor(date.getHours() / 6);
-      const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${hourBlock}`;
-      if (!map.has(key)) {
-        map.set(key, []);
-      }
-      map.get(key).push(record);
-    });
-
-    return Array.from(map.values()).map(group => ({
-      recordedAt: group[Math.floor(group.length / 2)].recordedAt,
-      gasLevelPercentage: group.reduce((sum, r) => sum + r.gasLevelPercentage, 0) / group.length,
-      gasLevelLiters: group.reduce((sum, r) => sum + r.gasLevelLiters, 0) / group.length,
-      count: group.length
-    }));
-  };
-
-  // Función para agrupar por día
-  const groupByDay = (data) => {
-    const map = new Map();
-    data.forEach(record => {
-      const date = new Date(record.recordedAt);
-      const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-      if (!map.has(key)) {
-        map.set(key, []);
-      }
-      map.get(key).push(record);
-    });
-
-    return Array.from(map.values()).map(group => {
-      // Tomar el registro del mediodía o el del medio
-      const middleIndex = Math.floor(group.length / 2);
-      return {
-        recordedAt: group[middleIndex].recordedAt,
-        gasLevelPercentage: group.reduce((sum, r) => sum + r.gasLevelPercentage, 0) / group.length,
-        gasLevelLiters: group.reduce((sum, r) => sum + r.gasLevelLiters, 0) / group.length,
-        count: group.length
-      };
-    });
-  };
 
   // Calcular estadísticas
   const statistics = useMemo(() => {
@@ -383,8 +383,8 @@ const TankHistoryChart = ({ history, tankCapacity }) => {
               </p>
             </div>
           </div>
-          <div className="w-full h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="w-full" style={{ height: '320px', minHeight: '320px' }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={320}>
               {chartType === 'area' ? (
                 <AreaChart
                   data={processedData}

@@ -32,6 +32,7 @@ const Recharges = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showRescheduleModal, setShowRescheduleModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
     const [selectedRecharge, setSelectedRecharge] = useState(null);
     const [formData, setFormData] = useState({
         tankId: '',
@@ -43,6 +44,7 @@ const Recharges = () => {
         newDate: '',
         reason: ''
     });
+    const [cancelReason, setCancelReason] = useState('');
 
     const isAdmin = user?.role?.toLowerCase() === 'admin';
 
@@ -190,13 +192,25 @@ const Recharges = () => {
         }
     };
 
-    const handleCancel = async (rechargeId) => {
-        const reason = prompt('Motivo de cancelación:');
-        if (!reason) return;
+    const openCancelModal = (recharge) => {
+        setSelectedRecharge(recharge);
+        setShowCancelModal(true);
+    };
+
+    const handleCancel = async (e) => {
+        e.preventDefault();
+
+        if (!cancelReason.trim()) {
+            toast.error('Por favor ingresa el motivo de cancelación');
+            return;
+        }
 
         try {
-            await rechargesAPI.cancelRecharge(rechargeId, reason);
+            await rechargesAPI.cancelRecharge(selectedRecharge.id, cancelReason);
             toast.success('Reabastecimiento cancelado');
+            setShowCancelModal(false);
+            setCancelReason('');
+            setSelectedRecharge(null);
             loadData();
         } catch (error) {
             console.error('Error cancelando reabastecimiento:', error);
@@ -503,7 +517,7 @@ const Recharges = () => {
                                                     <Button
                                                         variant="danger"
                                                         size="sm"
-                                                        onClick={() => handleCancel(recharge.id)}
+                                                        onClick={() => openCancelModal(recharge)}
                                                         icon={<XCircle size={16} />}
                                                     >
                                                         Cancelar
@@ -616,7 +630,7 @@ const Recharges = () => {
                                                 variant="danger"
                                                 onClick={() => {
                                                     setShowDetailModal(false);
-                                                    handleCancel(selectedRecharge.id);
+                                                    openCancelModal(selectedRecharge);
                                                 }}
                                                 icon={<XCircle size={16} />}
                                             >
@@ -882,6 +896,75 @@ const Recharges = () => {
                 </div>
             )}
 
+            {/* Cancel Modal */}
+            {showCancelModal && selectedRecharge && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <Card className="max-w-lg w-full shadow-2xl">
+                        <CardHeader className="bg-gradient-to-r from-red-600 to-red-700 text-white">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                    <AlertCircle size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold">Cancelar Reabastecimiento</h3>
+                                    <p className="text-red-100 text-sm mt-1">Esta acción no se puede deshacer</p>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardBody>
+                            <form onSubmit={handleCancel} className="space-y-4">
+                                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                                    <p className="text-sm text-red-800 mb-2">
+                                        <strong>Tanque:</strong> {getTankName(selectedRecharge)}
+                                    </p>
+                                    <p className="text-sm text-red-800">
+                                        <strong>Fecha Programada:</strong> {new Date(selectedRecharge.scheduledDate).toLocaleString('es-CO')}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Motivo de Cancelación *
+                                    </label>
+                                    <textarea
+                                        value={cancelReason}
+                                        onChange={(e) => setCancelReason(e.target.value)}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"
+                                        rows="4"
+                                        placeholder="Explica por qué se cancela este reabastecimiento..."
+                                        required
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        El motivo será registrado en el historial del reabastecimiento
+                                    </p>
+                                </div>
+
+                                <div className="flex gap-3 justify-end pt-4 border-t">
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={() => {
+                                            setShowCancelModal(false);
+                                            setCancelReason('');
+                                            setSelectedRecharge(null);
+                                        }}
+                                    >
+                                        Volver
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="danger"
+                                        icon={<XCircle size={18} />}
+                                    >
+                                        Confirmar Cancelación
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardBody>
+                    </Card>
+                </div>
+            )}
+
             {/* Reschedule Modal */}
             {showRescheduleModal && selectedRecharge && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -896,7 +979,7 @@ const Recharges = () => {
                             <form onSubmit={handleReschedule} className="space-y-4">
                                 <div>
                                     <p className="text-sm text-gray-600 mb-2">
-                                        <strong>Tanque:</strong> {getTankName(selectedRecharge.tankId)}
+                                        <strong>Tanque:</strong> {getTankName(selectedRecharge)}
                                     </p>
                                     <p className="text-sm text-gray-600">
                                         <strong>Fecha Actual:</strong> {new Date(selectedRecharge.scheduledDate).toLocaleString('es-CO')}

@@ -66,16 +66,16 @@ const Reports = () => {
 
     const calculateConsumptionStats = () => {
         const tanks = reportData.tanks;
-        const totalCapacity = tanks.reduce((sum, tank) => sum + (tank.capacity || 0), 0);
-        const totalCurrent = tanks.reduce((sum, tank) => sum + (tank.currentLevel || 0), 0);
-        const averageFillPercentage = tanks.length > 0
+        const totalCapacity = tanks.reduce((sum, tank) => sum + (tank.capacityLiters || 0), 0);
+        const totalCurrent = tanks.reduce((sum, tank) => sum + (tank.currentLevelLiters || 0), 0);
+        const averageFillPercentage = (tanks.length > 0 && totalCapacity > 0)
             ? (totalCurrent / totalCapacity) * 100
             : 0;
 
         return {
             totalCapacity,
             totalCurrent,
-            averageFillPercentage: averageFillPercentage.toFixed(2),
+            averageFillPercentage: isNaN(averageFillPercentage) ? 0 : averageFillPercentage.toFixed(2),
             tanksCount: tanks.length
         };
     };
@@ -179,11 +179,11 @@ const Reports = () => {
     const exportTanksReport = () => {
         const data = reportData.tanks.map(tank => ({
             ID: tank.id,
-            Nombre: tank.name,
+            Nombre: tank.name || tank.code,
             Ubicación: tank.location,
-            Capacidad: tank.capacity,
-            'Nivel Actual': tank.currentLevel,
-            'Porcentaje': tank.sensor?.currentPercentage || 0,
+            Capacidad: tank.capacityLiters,
+            'Nivel Actual': tank.currentLevelLiters,
+            'Porcentaje': tank.currentLevelPercentage?.toFixed(2) || 0,
             Estado: tank.sensor?.status || 'N/A'
         }));
         exportToCSV(data, 'informe_tanques');
@@ -481,34 +481,37 @@ const Reports = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {reportData.tanks.map(tank => (
-                                        <tr key={tank.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 font-medium">{tank.name}</td>
-                                            <td className="px-6 py-4">{tank.location}</td>
-                                            <td className="px-6 py-4">{tank.capacity} L</td>
-                                            <td className="px-6 py-4">{tank.currentLevel || 0} L</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                    (tank.sensor?.currentPercentage || 0) > 50
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : (tank.sensor?.currentPercentage || 0) > 20
-                                                        ? 'bg-yellow-100 text-yellow-700'
-                                                        : 'bg-red-100 text-red-700'
-                                                }`}>
-                                                    {tank.sensor?.currentPercentage || 0}%
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                    tank.sensor?.status === 'active'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-gray-100 text-gray-700'
-                                                }`}>
-                                                    {tank.sensor?.status || 'N/A'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {reportData.tanks.map(tank => {
+                                        const percentage = tank.currentLevelPercentage || 0;
+                                        return (
+                                            <tr key={tank.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 font-medium">{tank.name || tank.code}</td>
+                                                <td className="px-6 py-4">{tank.location}</td>
+                                                <td className="px-6 py-4">{tank.capacityLiters} L</td>
+                                                <td className="px-6 py-4">{tank.currentLevelLiters || 0} L</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                        percentage > 50
+                                                            ? 'bg-green-100 text-green-700'
+                                                            : percentage > 20
+                                                            ? 'bg-yellow-100 text-yellow-700'
+                                                            : 'bg-red-100 text-red-700'
+                                                    }`}>
+                                                        {percentage.toFixed(2)}%
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                        tank.sensor?.status === 'active'
+                                                            ? 'bg-green-100 text-green-700'
+                                                            : 'bg-gray-100 text-gray-700'
+                                                    }`}>
+                                                        {tank.sensor?.status || 'N/A'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
