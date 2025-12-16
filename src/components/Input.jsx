@@ -20,7 +20,7 @@ const Input = ({
       <input
         type={type}
         disabled={disabled}
-        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all dark:bg-gray-800 dark:text-white ${
+        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white text-gray-900 dark:bg-gray-800 dark:text-white ${
           error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600'
         } ${disabled ? 'bg-gray-100 dark:bg-gray-900 text-gray-500 dark:text-gray-500 cursor-not-allowed' : ''} ${className}`}
         {...props}

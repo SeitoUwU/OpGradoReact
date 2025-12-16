@@ -293,14 +293,13 @@ const Recharges = () => {
                                 Calendario
                             </button>
                         </div>
-                        <Button
-                            variant="primary"
-                            className="bg-white text-blue-600 hover:bg-blue-50"
+                        <button
                             onClick={() => setShowCreateModal(true)}
-                            icon={<Plus size={20} />}
+                            className="flex items-center gap-2 px-4 py-2 bg-white text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all shadow-md"
                         >
+                            <Plus size={20} />
                             Programar Reabastecimiento
-                        </Button>
+                        </button>
                     </div>
                 </div>
             </div>
